@@ -1,0 +1,203 @@
+---
+title: "Upload images to a remote server"
+description: "Configure Allsky to automatically upload images, keograms, startrails, and timelapse videos to a remote web server via FTP or SCP."
+---
+
+Allsky can automatically upload the current image, keograms, startrails, and timelapse videos to a remote server after each capture. This is useful when you want to display allsky content on an existing website — for example, an observatory site that also contains equipment descriptions and astrophotographs — without running the full Allsky Website software.
+
+<Note>
+  A **remote server** is different from a **remote Allsky Website**. A remote server is any web server you already operate that accepts file uploads. It does not run the Allsky Website application. If you want to deploy the full Allsky Website on a remote host, see the [Allsky Website Settings](/configuration/website-settings) page instead.
+</Note>
+
+## Why use a remote server?
+
+The remote server feature is designed for situations where you want the current allsky image (and nightly products) to appear on a page you already control. You simply configure your server to accept uploads from Allsky, and Allsky handles the rest automatically.
+
+Files uploaded to a remote server include:
+
+- The current capture image (e.g., `image.jpg`)
+- Nightly timelapse video (default name: `allsky.mp4`)
+- Nightly keogram (default name: `keogram.jpg`)
+- Nightly startrails image (default name: `startrails.jpg`)
+
+## Prepare the remote server
+
+Before enabling uploads from Allsky, create the following directories on the remote server. Names must be lowercase and spelled exactly as shown:
+
+```
+allsky/
+allsky/videos/
+allsky/videos/thumbnails/
+allsky/startrails/
+allsky/startrails/thumbnails/
+allsky/keograms/
+allsky/keograms/thumbnails/
+```
+
+The exact commands depend on your hosting provider, but a typical SSH session would look like:
+
+```bash
+mkdir -p allsky/videos/thumbnails
+mkdir -p allsky/startrails/thumbnails
+mkdir -p allsky/keograms/thumbnails
+```
+
+## Configure Allsky
+
+In the WebUI's **Allsky Settings** page, open the **Remote Server Settings** subsection under **Websites and Remote Server Settings**.
+
+Enable **Use Remote Server**, then fill in the connection details. After enabling the setting, Allsky automatically uploads a test file to verify the connection. If there are problems, see the Troubleshooting section below.
+
+## Protocol configuration
+
+<Tabs>
+  <Tab title="FTP / FTPS">
+    FTPS (secure FTP) is the recommended protocol for most shared hosting providers. Plain `ftp` is also supported but is insecure and should be avoided.
+
+    | Setting | Description |
+    |---|---|
+    | Protocol | Set to `ftps` (recommended) or `ftp`. |
+    | Server Name | Hostname of the remote server. This is usually **not** the same as the public website URL. Contact your hosting provider if unsure. |
+    | Port | (Optional) Port required by the server. Usually auto-detected. |
+    | User Name | Login username on the remote server. |
+    | Password | Login password on the remote server. |
+    | FTP Commands | (Optional) Additional `lftp` commands to send before transferring files. If uploads fail, check the Troubleshooting page for common commands to add here. Multiple commands are separated with a semicolon. |
+    | Image Directory | Directory on the server where the current image should be uploaded. |
+
+    Example configuration for a typical shared host:
+
+    ```
+    Protocol:     ftps
+    Server Name:  ftp.example.com
+    User Name:    allsky@example.com
+    Password:     ••••••••
+    Image Directory: /public_html/allsky
+    ```
+
+    <Warning>
+      Plain `ftp` transmits credentials in cleartext. Use `ftps` or `sftp` instead whenever your server supports it.
+    </Warning>
+  </Tab>
+  <Tab title="SCP / SFTP">
+    SCP and SFTP use SSH for secure, encrypted transfers. They require SSH key-based authentication — no password is used at transfer time.
+
+    **Step 1 — Generate an SSH key pair on the Pi:**
+
+    ```bash
+    ssh-keygen -t rsa
+    ```
+
+    When prompted for a filename, press Enter to accept the default (`~/.ssh/id_rsa`). When prompted for a passphrase, press Enter to leave it empty (required for unattended uploads).
+
+    **Step 2 — Copy the public key to the remote server:**
+
+    ```bash
+    ssh-copy-id remote_username@remote_server
+    ```
+
+    Replace `remote_username` with the login name on the remote server and `remote_server` with its hostname or IP address. If prompted to continue connecting, enter `yes`.
+
+    **Step 3 — Configure Allsky:**
+
+    | Setting | Description |
+    |---|---|
+    | Protocol | Set to `scp` or `sftp`. |
+    | Server Name | Hostname or IP address of the remote server. |
+    | User Name | SSH login username. |
+    | SSH Public Key File | Path to the private key file, typically `~/.ssh/id_rsa`. |
+    | Image Directory | Directory on the server where the current image should be uploaded. |
+
+    **Amazon Lightsail (using a `.pem` key):**
+
+    If your server is an Amazon Lightsail instance with a `.pem` key file, copy the key to your Pi and set permissions:
+
+    ```bash
+    chmod 400 ~/ssh-key.pem
+    ```
+
+    Then configure Allsky as follows:
+
+    | Setting | Value |
+    |---|---|
+    | Protocol | `sftp` |
+    | Server Name | Your Lightsail hostname |
+    | User Name | Your Lightsail username |
+    | Password | `n/a` |
+    | FTP Commands | `set sftp:connect-program 'ssh -a -x -i /home/pi/ssh-key.pem'` |
+  </Tab>
+  <Tab title="rsync">
+    `rsync` uses SSH to efficiently sync files, only transferring what has changed.
+
+    | Setting | Description |
+    |---|---|
+    | Protocol | Set to `rsync`. |
+    | Server Name | Hostname of the remote server. |
+    | User Name | SSH login username. |
+    | SSH Public Key File | Path to the SSH private key (same setup as SCP — see the SCP/SFTP tab). |
+    | Image Directory | Destination directory on the remote server. |
+  </Tab>
+  <Tab title="S3 / GCS">
+    Allsky supports uploading to Amazon Web Services S3 and Google Cloud Storage.
+
+    **AWS S3**
+
+    Install and configure the AWS CLI first:
+
+    ```bash
+    pip3 install awscli --upgrade --user
+    export PATH="${HOME}/.local/bin:${PATH}"
+    aws configure
+    ```
+
+    When prompted by `aws configure`, enter a valid Access Key ID, Secret Access Key, and Default region name (e.g., `us-west-2`). Set Default output format to `json`.
+
+    | Setting | Description |
+    |---|---|
+    | Protocol | Set to `s3`. |
+    | AWS CLI Directory | Directory where the AWS CLI is installed, typically `${HOME}/.local/bin`. |
+    | S3 Bucket | Name of the S3 bucket. Suggested name: `allskybucket`. Must be in the configured default region. |
+    | S3 ACL | Access control: `private` by default. Set to `public-read` to serve files over HTTP/HTTPS. |
+
+    <Tip>
+      Disable or limit bucket versioning in S3 to avoid accumulating large amounts of storage from repeated uploads of `image.jpg`.
+    </Tip>
+
+    **Google Cloud Storage**
+
+    Install the `gsutil` tool (part of the Google Cloud SDK) and authenticate before use.
+
+    | Setting | Description |
+    |---|---|
+    | Protocol | Set to `gcs`. |
+    | GCS Bucket | Name of the GCS bucket. Suggested name: `allskybucket`. |
+    | GCS ACL | Access control: `private` by default. Set to `publicRead` to serve files over HTTPS. |
+  </Tab>
+</Tabs>
+
+## Uploaded file names
+
+By default, Allsky uses fixed filenames for each type of upload so your web page always references the same URL:
+
+| File | Default remote name |
+|---|---|
+| Current image | `image.jpg` (or `image-YYYYMMDDHHMMSS.jpg` if **Upload With Original Name** is enabled) |
+| Timelapse video | `allsky.mp4` |
+| Keogram | `keogram.jpg` |
+| Startrails | `startrails.jpg` |
+
+You can change the timelapse, keogram, and startrails destination names in the **Remote Server Settings** section. Changing the image name with **Upload With Original Name** is only recommended when using the server as a backup, since it breaks direct URL references.
+
+## Troubleshooting uploads
+
+After enabling **Use Remote Server**, Allsky uploads a test file. If that test fails, or if uploads stop working later:
+
+1. Check the Allsky log for error messages. Increase **Debug Level** to `3` in the Allsky Settings to get more detail.
+2. Verify the remote directories exist and are writable by the upload user.
+3. For FTP issues, try adding protocol-specific commands to the **FTP Commands** field. Common fixes are documented in the Troubleshooting → Uploads page of the local WebUI documentation.
+4. For SSH key issues, test the connection manually from the Pi:
+
+   ```bash
+   ssh remote_username@remote_server
+   ```
+
+   If this prompts for a password, key-based authentication is not set up correctly. Re-run `ssh-copy-id` and verify the key file path in the Allsky settings.

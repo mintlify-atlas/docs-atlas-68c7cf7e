@@ -1,0 +1,119 @@
+---
+title: "Image overlays: annotate your sky images"
+description: "Use the Allsky Overlay Editor to add text, live data fields, and images to every captured frame using drag-and-drop positioning and font control."
+---
+
+An **overlay** is information added on top of each captured Allsky image. This typically includes the time the image was taken, the sensor temperature, and the exposure length, but can include any text or images you want. Allsky offers two methods for adding overlays, selectable via the **Overlay Method** setting on the **Allsky Settings** page in the WebUI.
+
+<Tabs>
+  <Tab title="Module method (recommended)">
+    The **module** method is the default and will be the only supported method in the next version of Allsky. It is significantly more flexible than the legacy method and supports drag-and-drop placement, images, and per-image or live-only overlays.
+
+    ### How it works
+
+    The **Overlay Editor** web page is used to define what information you want on captured images and where it should go. Once configured, you won't need to visit the editor again unless you want to change the overlay layout.
+
+    After Allsky captures an image, it passes the image and metadata (time, exposure, gain, etc.) to the **Overlay Module**. The module then:
+
+    <Steps>
+      <Step title="Resolve system variables">
+        System variables like `${TIME}` and `${sEXPOSURE}` are replaced with their current values.
+      </Step>
+      <Step title="Resolve custom variables">
+        Any user-defined variables are replaced with their values.
+      </Step>
+      <Step title="Composite images">
+        Any image fields (logos, weather graphs, compasses) are blended onto the captured image.
+      </Step>
+    </Steps>
+
+    To enable the module method, go to **Allsky Settings** in the WebUI and select **module** in the **Image Overlay** setting. This disables the legacy overlay settings in that section — configuration moves entirely into the Overlay Editor.
+
+    ### Overlay Editor features
+
+    The Overlay Editor provides a browser-based interface for building overlays:
+
+    - **Drag and drop interface** — Fields can be dragged around the screen to position them precisely.
+    - **Font Manager** — Upload any TrueType font or use fonts already on your Pi.
+    - **Variable Manager** — A library of built-in fields you can add to the image. Custom fields can also be added.
+    - **Image Manager** — Upload and manage images you want to composite onto captured frames.
+
+    ### Fields and variables
+
+    Fields are the building blocks of an overlay. Each field has its own properties and is placed independently.
+
+    | Field type | Description |
+    |---|---|
+    | **Text** | Contains static text and/or variables, e.g. `Exposure: ${sEXPOSURE}` |
+    | **Image** | Contains a picture, graphic, or any image file |
+
+    **Variables** are placeholders inside text fields whose values are determined at capture time. For example:
+
+    ```text
+    ${TIME}           — Time the image was taken (changes every image)
+    ${sEXPOSURE}      — Exposure length
+    ${CAMERA_MODEL}   — Camera model, e.g. "HQ" or "ASI290MM"
+    ```
+
+    Variable names must start with a letter (`a–z` or `A–Z`). The remaining characters may be letters, digits (`0–9`), or underscores. By convention, variable names are uppercase and case-sensitive.
+
+    <Note>
+      Allsky reserves the prefixes `AS_` and `ALLSKY_` for system variables. Use a unique prefix (such as your initials) for any custom variables you define to avoid naming conflicts.
+    </Note>
+
+    ### Text field formatting options
+
+    Each text field supports:
+
+    - Any TrueType font
+    - Any color
+    - Any font size
+    - Rotation (arbitrary degrees)
+
+    ### Image field options
+
+    Each image field supports:
+
+    - Scaling (resize to any dimensions)
+    - Rotation
+    - Opacity (partial transparency, useful for weather graphs overlaid on sky)
+
+    ### Live image vs. saved image overlays
+
+    One unique capability of the module method is that you can add an overlay **only to the live image** displayed in the WebUI without applying it to saved image files. This is useful for status indicators you want to monitor in real time but do not want burned into your archival images.
+  </Tab>
+  <Tab title="Legacy method">
+    The **legacy** method allows only text to be placed in a single location on an image with limited formatting options. It does not support image fields, drag-and-drop positioning, or live-only overlays.
+
+    <Warning>
+      The legacy method will be removed in the next version of Allsky. Start using the module method now to avoid a required migration later.
+    </Warning>
+
+    Legacy overlay settings are configured directly on the **Allsky Settings** page in the WebUI under the **Image overlay settings** section. When you switch to the module method, these settings are ignored.
+  </Tab>
+</Tabs>
+
+## Common overlay fields
+
+The Variable Manager in the Overlay Editor provides a library of pre-built fields. Commonly used variables include:
+
+<CardGroup cols={2}>
+  <Card title="Time and date" icon="clock" href="/features/overlays">
+    `${TIME}`, `${DATE}` — timestamp of the captured image
+  </Card>
+  <Card title="Sensor temperature" icon="thermometer" href="/features/overlays">
+    Sensor temperature in °C, useful for monitoring camera thermals
+  </Card>
+  <Card title="Exposure and gain" icon="camera" href="/configuration/exposure-gain-saturation">
+    `${sEXPOSURE}`, gain value — key capture parameters per image
+  </Card>
+  <Card title="Star count" icon="star" href="/features/modules">
+    Star count from the Star Count module, when enabled in the module pipeline
+  </Card>
+  <Card title="Camera model" icon="microchip" href="/features/overlays">
+    `${CAMERA_MODEL}` — model name of the camera, e.g. "HQ" or "ASI290MM"
+  </Card>
+  <Card title="Custom text" icon="pencil" href="/features/overlays">
+    Any static label or user-defined variable you want burned into images
+  </Card>
+</CardGroup>

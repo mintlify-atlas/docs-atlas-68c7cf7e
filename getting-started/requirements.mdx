@@ -1,0 +1,69 @@
+---
+title: "Supported hardware and operating systems for Allsky"
+description: "Find out which Raspberry Pi models, camera types, and operating system versions are compatible with the Allsky Camera software before you buy."
+---
+
+Allsky runs on a Raspberry Pi and requires a supported camera and operating system. Before purchasing hardware or flashing an OS image, review the compatibility information below to make sure your setup will work.
+
+## Supported Raspberry Pi models
+
+Allsky supports the following Pi models: **Zero 2, Pi 2, Pi 3, Pi 4, Pi 5**, and the **Le Potato**. The Pi 5 with 8 GB of RAM is the best choice if budget allows — it handles all Allsky tasks with headroom to spare. The Pi 4 (4 GB or 2 GB) is the next best option. A Pi 3B+ will work but will be slower when generating timelapse videos.
+
+<Warning>
+**Pi Zero** — its extremely slow CPU and minimal memory (0.5 GB) will cause problems. You likely won't be able to create keograms, startrails, or timelapse videos. Do not use it.
+
+**Pi Zero 2** — faster than the Pi Zero but still has limited memory and should only be considered if cost is the only concern. Timelapse video generation may or may not succeed. Future Allsky versions will likely require more processing power, so the Zero 2 may not remain supported.
+
+**Buster support is being dropped** in the next major release. If you are running Raspberry Pi OS Buster, plan to upgrade to Bookworm.
+</Warning>
+
+Le Potato is the only Pi-compatible third-party board confirmed to work with Allsky. Other clone boards are not supported.
+
+### SD card recommendation
+
+Use at least a 128 GB SD card. A 256 GB card gives more room for images and timelapse videos. Card speed has little impact on normal Allsky operation.
+
+## Supported cameras
+
+<CardGroup cols={2}>
+  <Card title="ZWO Cameras" icon="camera" href="https://www.zwoastro.com">
+    Any ZWO camera sold before **February 1, 2025** is supported. The ASI120-series is not recommended — it tends to produce poor-quality images with noise and hot pixels. The "T7C" (an OEM version of the ASI120MC-mini) is also not recommended.
+  </Card>
+  <Card title="Raspberry Pi Camera Modules" icon="microchip" href="https://www.raspberrypi.com/products/camera-module/">
+    - **HQ** (IMX477 sensor) — recommended for its large sensor and lens flexibility
+    - **Module 3** (IMX708 sensor)
+    - **Version 1** (OV5647 sensor) — **not recommended**: 0.9 second maximum exposure limits night sky imaging
+  </Card>
+  <Card title="Arducam Modules" icon="circle-dot" href="https://www.arducam.com">
+    - 16 MP (IMX519 sensor)
+    - 64 MP (arducam_64mp sensor)
+    - 462 (arducam-pivariety sensor)
+    - 64 MP Owlsight (OV64a40 sensor)
+  </Card>
+  <Card title="Other Supported Cameras" icon="satellite-dish" href="https://github.com/AllskyTeam/allsky">
+    - Waveshare imx219-d160 (IMX290 sensor)
+    - OneInchEye IMX283 (IMX283 sensor)
+    - IMX290 60.00 fps
+  </Card>
+</CardGroup>
+
+## Required operating system
+
+Allsky requires **Raspberry Pi OS** (the Debian-based Linux distribution). Other distributions such as Ubuntu are not supported.
+
+| OS Version | Status |
+|---|---|
+| Bookworm 64-bit (Desktop) | **Recommended** — use this if possible |
+| Bullseye | Supported |
+| Buster | Supported in this release only — support dropping in the next major release |
+
+Install the **Desktop** version of Pi OS when setting up a new Pi. The 64-bit release of Bookworm is strongly preferred for best compatibility and performance.
+
+## Performance notes
+
+Taking pictures does not require much processing power — any supported Pi will handle image capture. The difference becomes noticeable during post-processing:
+
+- **Keograms, startrails, and timelapse video generation** are CPU- and memory-intensive. Slower Pis (Pi 3, Zero 2) will take longer and may struggle.
+- **Pi models with 1 GB RAM** require additional swap space, which slows performance and increases SD card wear.
+- **Higher-resolution sensors** (such as the RPi HQ at 4056×3040) require more memory for timelapse generation. See the troubleshooting documentation if you run into issues.
+- Running Allsky in a **non-ventilated enclosure** may cause heat problems on faster Pis such as the Pi 4 and Pi 5. Consider adding a fan to pull in outside air, which also extends the life of both the camera and the Pi.

@@ -1,0 +1,226 @@
+---
+title: "Configure Allsky camera and capture settings"
+description: "Learn how to use the Allsky WebUI Settings page to configure your camera, image capture, overlays, uploads, and end-of-night processing."
+---
+
+After installing Allsky for the first time, you must configure many settings through the WebUI's **Allsky Settings** page. If you are upgrading from a recent prior release, settings can optionally be carried forward. The available settings depend on your camera model — settings specific to a camera type (RPi or ZWO) are indicated as such. Where appropriate, the WebUI displays the minimum, maximum, and default values when you hover over a setting.
+
+Settings are stored as JSON in the Allsky config directory and are validated by the WebUI before saving.
+
+<Note>
+  The **Camera Type** and **Camera Model** settings (at the bottom of the page) must be set first. The list of available settings changes depending on the camera type selected.
+</Note>
+
+## Accessing the settings page
+
+<Steps>
+  <Step title="Open the WebUI">
+    Navigate to your Allsky WebUI in a browser. By default this is `http://<your-pi-hostname>/` on your local network.
+  </Step>
+  <Step title="Open Allsky Settings">
+    Click the **Allsky Settings** link in the top navigation bar.
+  </Step>
+  <Step title="Modify and save">
+    Change any settings as needed. The WebUI shows minimum, maximum, and default values on hover. Click **Save changes** when done. Some settings require a reload of the Allsky process to take effect.
+  </Step>
+</Steps>
+
+## Setting categories
+
+<AccordionGroup>
+  <Accordion title="Daytime Settings">
+    Daytime settings control image capture and processing during daylight hours.
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Daytime Capture | Yes | Enable to capture images during the day. |
+    | Daytime Save | No | Enable to save daytime images to disk. Only applies when Daytime Capture is enabled. |
+    | Auto-Exposure | Yes | Turns on auto-exposure, which adjusts the exposure to keep images properly exposed as sky brightness changes. |
+    | Max Auto-Exposure | Camera dependent | Maximum exposure in milliseconds when Auto-Exposure is enabled. |
+    | Manual Exposure | 0.5 ms | Manual exposure time. When Auto-Exposure is on, this value is used as a starting point. |
+    | Mean Target | 0.5 | Target mean brightness level (0.0–1.0) when Auto-Exposure is on. Best used with both Auto-Exposure and Auto-Gain enabled. |
+    | Mean Threshold | 0.1 | How close (±) the actual brightness should be to the Mean Target. |
+    | Delay | 5000 ms | Time to wait between the end of one image and the start of the next. |
+    | Auto-Gain | No | Turns on Auto-Gain. For ZWO cameras, daytime Auto-Gain is usually kept off since daytime images are bright and do not need additional gain. |
+    | Max Auto-Gain | Camera dependent | Maximum gain when Auto-Gain is enabled. |
+    | Gain | Camera dependent | Gain (similar to ISO). When Auto-Gain is off, increasing gain brightens images but adds noise. The default daytime gain is the camera's minimum. |
+    | Stretch Amount | 0 | How much to stretch (increase contrast of) the image. 0 disables stretching, 3 is typical, 20 is a lot. |
+    | Stretch Mid Point | 10 | Which brightness level to stretch: 0 = black, 50 = middle gray. |
+    | Binning | 1x1 | Bin 2×2 collects light from 4 pixels into one larger pixel, producing smaller images. |
+    | Auto White Balance | No | Sets daytime auto white balance. Red/Blue balance values are used as starting points. |
+    | Red Balance | Camera dependent | Intensity of the red channel. |
+    | Blue Balance | Camera dependent | Intensity of the blue channel. |
+    | Frames To Skip | 5 | Number of frames to skip at startup while auto-exposure converges. Only applies when Auto-Exposure is enabled. |
+    | Cooling | No | (ZWO cooled cameras only) Enable sensor cooling. |
+    | Target Temp. | 0°C | (ZWO cooled cameras only) Target sensor temperature when cooling is enabled. |
+  </Accordion>
+
+  <Accordion title="Nighttime Settings">
+    Nighttime settings mirror the daytime settings unless noted otherwise. Key differences are below.
+
+    | Setting | Default | Notes |
+    |---|---|---|
+    | Manual Exposure | 10000 ms | Default nighttime exposure is much longer than daytime. |
+    | Mean Target | 0.2 | Lower target brightness appropriate for nighttime skies. |
+    | Delay | 10 ms | Shorter delay since exposures are already long. |
+    | Auto-Gain | No | With ZWO cameras, enabling both Auto-Exposure and Auto-Gain together can produce unpredictable results. |
+    | Gain | Camera dependent | Default is one-half the maximum for the camera. |
+    | Frames To Skip | 1 | Fewer frames skipped at night startup. |
+  </Accordion>
+
+  <Accordion title="Both Day and Night Settings">
+    These settings apply regardless of time of day.
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Days To Keep | 14 | Number of days of images and videos to retain in `~/allsky/images`. Directories older than this are deleted at end of night. Set to `0` to keep all data. |
+    | Saturation | Camera dependent | (RPi only) Sets saturation from black-and-white to extra saturated. |
+    | Contrast | Camera dependent | (RPi only) Adjusts the difference between blacks and whites. |
+    | Sharpness | Camera dependent | (RPi only) Adjusts image sharpness. Overly sharp images look unnatural. |
+    | Aggression | 75% | (ZWO only) How much of a calculated exposure change to apply per frame. Lower values smooth out brightness changes but react more slowly. |
+    | Gain Transition Time | 15 min | (ZWO only) Minutes over which to ramp gain when transitioning between day and night. Set to `0` to disable transitions. |
+    | Image Type | auto | Image format. `auto` picks the best type: RGB24 for color cameras, RAW16 or RAW8 for mono cameras. |
+    | Quality / Compression | 95 | For JPG: quality (0–100). For PNG: compression level (0–9). |
+    | Filename | image.jpg | Output image filename. Supported extensions: `jpg` and `png`. |
+    | Flip | No flip | How to flip the image (None, Horizontal, Vertical, or Both). |
+    | Consistent Delays Between Images | Yes | Makes the time between the *start* of consecutive exposures constant (Max Auto-Exposure + Delay). Produces evenly spaced timelapse frames. |
+    | Time Format | `%Y%m%d %H:%M:%S` | Format for timestamps on images. Run `man 3 strftime` for options. |
+    | Temperature Units | Celsius | Units for temperature display: Celsius, Fahrenheit, or Both. |
+    | Latitude | — | Latitude of the camera. Used to calculate sunrise/sunset. Format: `123.4N`, `123.4S`, `+123.4`, or `-123.4`. |
+    | Longitude | — | Longitude of the camera. West is negative. |
+    | Angle | -6 | Altitude of the Sun at which day/night switches. `-6` = civil twilight, `-12` = nautical, `-18` = astronomical. |
+    | Take Dark Frames | No | Enable to capture dark frames for noise reduction. |
+    | Use Dark Frames | No | Apply dark frame subtraction at night (requires dark frames to have been captured first). |
+    | Debug Level | 1 | Log verbosity: 0 = errors only, 1 = informational, 3 = debugging, 4 = verbose (developer use only). |
+  </Accordion>
+
+  <Accordion title="Image Overlay Settings">
+    The image overlay is text and data embedded into every captured image. This is distinct from the constellation overlay, which is optionally displayed on top of images in the Allsky Website.
+
+    <Note>
+      The default **Overlay Method** is `module`, which uses the enhanced overlay system. When `module` mode is active, the legacy overlay settings on this page do not apply. Enable the Overlay Module in the Overlay Manager instead.
+    </Note>
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Overlay Method | module | `module` uses the new overlay system. Legacy mode will be removed in a future release. |
+    | Show Time | Yes | Display the capture time in the overlay. |
+    | Show Temperature | Yes | (ZWO only) Display sensor temperature in the overlay. |
+    | Show Exposure | Yes | Display the exposure time. "(auto)" appears when Auto-Exposure is active. |
+    | Show Gain | Yes | Display the gain. "(auto)" appears when Auto-Gain is active. |
+    | Show Mean Brightness | No | Display the mean brightness value used for auto-exposure calculations. |
+    | Text Overlay | — | Custom text displayed below the timestamp. |
+    | Extra Text File | — | Path to a text file whose contents are displayed in the overlay. |
+    | Font Name | Simplex | Font used for overlay text. |
+    | Font Color | 255 0 0 | Font color in Blue, Green, Red (BGR) order. |
+    | Font Size | 7 | Font size. Experiment with this value based on your sensor size. |
+  </Accordion>
+
+  <Accordion title="Post Capture Settings">
+    These settings control processing that runs immediately after each image is captured.
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Remove Bad Images Threshold Low | 0.1 | Images with mean brightness below this value are deleted. Useful range: `0.01`–`0.2`. Set to `0` to disable. |
+    | Remove Bad Images Threshold High | 0.9 | Images with mean brightness above this value are deleted. Useful range: `0.8`–`0.95`. Set to `0` to disable. |
+    | Create Image Thumbnails | Yes | Save image thumbnails to `~/allsky/images`. |
+    | Thumbnail Width | 100 px | Width of image and video thumbnails. |
+    | Thumbnail Height | 75 px | Height of image and video thumbnails. |
+    | Image Resize Width | 0 | Resize images to this width before saving. `0` disables resizing. Must be an even number. |
+    | Image Resize Height | 0 | Resize images to this height before saving. |
+    | Image Crop Top/Right/Bottom/Left | 0 | Pixels to crop from each side. Often used to remove dark borders produced by fisheye lenses. |
+  </Accordion>
+
+  <Accordion title="Timelapse Settings">
+    Timelapse settings control the daily end-of-night video and optional mini-timelapses created during the night.
+
+    **Daily Timelapse**
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Generate | Yes | Create a timelapse video at end of night. |
+    | Upload | Yes | Upload the timelapse to an Allsky Website and/or remote server. |
+    | Width / Height | 0 | Output video dimensions. `0` uses the original image size. |
+    | Bitrate | 5000 kbps | Video bitrate. Higher values = better quality but larger files. |
+    | FPS | 25 | Frames per second. Higher values = smoother but shorter videos. |
+    | Extra Parameters | — | Additional `ffmpeg` parameters. Try `-level 3.1` for Apple device compatibility. |
+
+    **Mini-Timelapse**
+
+    A mini-timelapse includes only the most recent N images and is regenerated frequently during the night — useful for showing recent activity.
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Number Of Images | 0 | Images to include in each mini-timelapse. `0` disables mini-timelapses. 30 is a good starting point. |
+    | Frequency | 5 | Regenerate the mini-timelapse every N captured images. |
+    | Bitrate | 2000 kbps | Typically smaller than a full timelapse to save processing time. |
+    | FPS | 5 | Low FPS appropriate for the small number of frames. |
+
+    <Warning>
+      Be careful when setting Number Of Images and Frequency together with a short Delay. If the previous mini-timelapse has not finished before the next one starts, the second will be aborted and a System Message will appear in the WebUI.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Keogram and Startrails Settings">
+    **Keograms**
+
+    A keogram is a single composite image created at end of night by extracting a vertical strip from each captured image.
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Generate | Yes | Create a keogram at end of night. |
+    | Upload | Yes | Upload the keogram to an Allsky Website and/or remote server. |
+    | Expand | Yes | Expand the keogram to the full image width. |
+    | Font Color | `#ffffff` (white) | Color of the date/time label on the keogram. |
+    | Font Size | 2 | Font size for the keogram label. |
+    | Extra Parameters | — | Additional parameters. Run `~/allsky/bin/keogram --help` for options. |
+
+    **Startrails**
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Generate | Yes | Create a startrails image at end of night. |
+    | Brightness Threshold | 0.1 | Discard images brighter than this threshold (e.g., moon, headlights). Range: 0.0–1.0. |
+    | Upload | Yes | Upload the startrails image to an Allsky Website and/or remote server. |
+    | Extra Parameters | — | Additional parameters. Run `~/allsky/bin/startrails --help` for options. |
+  </Accordion>
+
+  <Accordion title="Websites and Remote Server Settings">
+    Allsky supports uploading files to a local website (on the Pi), a remote Allsky Website, and/or a remote server that does not run the Allsky Website software.
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Resize Uploaded Images Width | 0 | Resize images before uploading to save bandwidth. `0` disables resizing. |
+    | Upload Every X Images | 1 | How often to upload the current image. `0` disables image uploads. |
+
+    **Local Website**
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Use Local Website | No | Enable to serve an Allsky Website directly from the Pi. No additional installation needed. |
+    | Days To Keep on Pi Website | 14 | Delete website images, videos, and thumbnails older than this many days. `0` keeps all data. |
+
+    **Remote Website**
+
+    | Setting | Default | Description |
+    |---|---|---|
+    | Use Remote Website | No | Enable to upload to a remote Allsky Website. |
+    | Protocol | ftps | Transfer protocol: `ftps`, `sftp`, `ftp`, `scp`, `rsync`, `s3`, or `gcs`. |
+    | Server Name | — | Hostname of the remote server (not the URL). |
+    | User Name / Password | — | Login credentials for the remote server. |
+    | SSH Public Key File | — | (scp/rsync only) Path to the SSH public key for key-based authentication. |
+
+    **Remote Server** (non-Allsky Website)
+
+    The Remote Server settings are the same as for the Remote Website. See [Upload images to a remote server](/configuration/remote-server) for full details.
+  </Accordion>
+
+  <Accordion title="Camera">
+    | Setting | Description |
+    |---|---|
+    | Camera Type | The type of camera: ZWO or RPi. Change this first if switching camera types, then save before updating Camera Model. |
+    | Camera Model | The specific camera model. Only models of the selected Camera Type are shown. |
+
+    If you connect or disconnect a camera, use the **Refresh** option to update the available camera types and models.
+  </Accordion>
+</AccordionGroup>

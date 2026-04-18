@@ -1,0 +1,102 @@
+---
+title: "Allsky WebUI: browser-based administration"
+description: "The Allsky WebUI provides full browser-based control over your camera: live image viewing, settings, file management, and system monitoring."
+---
+
+The **Allsky WebUI** is a browser-based administration interface that runs on your Raspberry Pi. Once Allsky is installed and running, you can access the WebUI from any device on the same network — no additional software required. All major Allsky features are configured and monitored through the WebUI.
+
+## Accessing the WebUI
+
+Open a browser on any device connected to the same network as your Pi and navigate to:
+
+```
+http://<your-pi-ip>/
+```
+
+Replace `<your-pi-ip>` with the IP address or hostname of your Raspberry Pi. The main WebUI requires login credentials.
+
+### Public page
+
+A separate public-facing page is available for sharing your live sky view without requiring a login:
+
+```
+http://<your-pi-ip>/public.php
+```
+
+This page displays the live sky image and is suitable for sharing with others or embedding in a website.
+
+## Main sections
+
+<CardGroup cols={2}>
+  <Card title="Live image" icon="eye" href="#">
+    Displays the most recently captured image, updated automatically. Shows the current sky in near-real-time.
+  </Card>
+  <Card title="Image gallery" icon="images" href="#">
+    Browse all saved images organized by date. View individual captures, keograms, startrails, and timelapse videos.
+  </Card>
+  <Card title="Allsky Settings" icon="gear" href="#">
+    Configure every Allsky parameter: camera settings, overlay method, keogram and startrails options, timelapse settings, upload destinations, and more.
+  </Card>
+  <Card title="System page" icon="server" href="#">
+    Monitor Raspberry Pi system health: CPU temperature, memory usage, disk space, and throttling status. View the Allsky log file for diagnostics.
+  </Card>
+  <Card title="Module Manager" icon="puzzle-piece" href="#">
+    Enable, disable, order, and configure post-capture modules for each flow (daytime, nighttime, transitions, periodic).
+  </Card>
+  <Card title="Overlay Editor" icon="pen-to-square" href="#">
+    Design overlays with a drag-and-drop interface. Place text fields, image fields, and live data variables anywhere on the image.
+  </Card>
+</CardGroup>
+
+## Settings management
+
+The **Allsky Settings** page exposes the full Allsky configuration in a browser form. Changes take effect after clicking **Save changes**, which restarts Allsky with the new configuration. Settings are organized into sections including:
+
+- Camera settings (exposure, gain, white balance, binning)
+- Image overlay settings (overlay method, legacy text options)
+- Keogram, startrails, and timelapse generation and upload options
+- Upload destinations (remote server, Allsky Website)
+- Dark frame capture and subtraction
+- Location and sky angle for day/night transitions
+
+## File explorer
+
+The image gallery in the WebUI lets you browse the file system of saved images without needing SSH access. You can navigate to any date folder and view:
+
+- Individual captured images
+- Keogram files
+- Startrails images
+- Timelapse videos (daily and mini)
+
+## Module Manager
+
+The Module Manager is accessible from the WebUI navigation. It provides a visual drag-and-drop interface for building module pipelines. For each flow (Daytime Capture, Nighttime Capture, Day to Night, Night to Day, Periodic), you can:
+
+- Select which modules run and in what order
+- Enable or disable individual modules
+- Configure per-module settings
+- Reset a flow to the installation default
+- Restore a flow from a previous backup
+
+See the [Modules](/features/modules) page for a full list of available built-in modules.
+
+## Overlay Editor
+
+The Overlay Editor is a dedicated page within the WebUI for designing image overlays. It provides:
+
+- **Drag and drop positioning** of text and image fields
+- **Font Manager** for uploading TrueType fonts or selecting fonts already on the Pi
+- **Variable Manager** for browsing and inserting system variables
+- **Image Manager** for uploading graphics (logos, compasses, weather graphs) to use in overlays
+
+Overlay designs are saved and automatically applied by the Overlay module every time an image is captured.
+
+## Built-in documentation
+
+The WebUI includes links to the built-in Allsky documentation pages. These cover features, settings, troubleshooting, and module references and are accessible directly from the Pi without an internet connection.
+
+## Network access
+
+<Note>
+  The WebUI is accessible to any device on your local network. If you expose your Pi to the internet, ensure you change the default login credentials and consider network-level access controls.
+</Note>

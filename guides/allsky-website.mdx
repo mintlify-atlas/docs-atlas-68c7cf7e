@@ -1,0 +1,122 @@
+---
+title: "Install and configure the Allsky Website"
+description: "Set up the Allsky Website on your Raspberry Pi or a remote server to publicly display sky images, keograms, startrails, and timelapse videos."
+---
+
+The Allsky Website is a PHP-based web interface that displays your current sky image, keograms, startrails, timelapse videos, and an image gallery. You can run it directly on your Raspberry Pi (a **local** website) or on any internet-accessible server (a **remote** website). Both options are configured through the WebUI and support the same set of features.
+
+## Local vs remote website
+
+<Tabs>
+  <Tab title="Local website (on the Pi)">
+    A local Allsky Website runs on the Pi itself. The code is already present after installing Allsky — you only need to enable and configure it.
+
+    <Steps>
+      <Step title="Enable the local website">
+        Go to the **Allsky Settings** page in the WebUI and enable the **Use Local Website** setting in the **Websites and Remote Server Settings** section. This creates a default `configuration.json` file.
+      </Step>
+      <Step title="Configure the website">
+        In the WebUI, go to the **Editor** page and select `configuration.json (local Allsky Website)` from the drop-down. You will see one or more `XX_NEED_TO_UPDATE_XX` entries that must be changed. Set the remaining entries to your liking.
+      </Step>
+      <Step title="Visit your website">
+        Open a browser on your local network and navigate to `http://allsky` (or the hostname you assigned to your Pi). You should see the Allsky Website with your current sky image.
+      </Step>
+    </Steps>
+
+    <Note>
+      If you are upgrading from Allsky **v2022.03.01** or earlier, you must manually copy your prior settings from `/var/www/html/allsky/config.js` into the new `configuration.json` via the WebUI Editor. After migrating, remove the old website directory:
+
+      ```bash
+      rm -fr /var/www/html/allsky
+      ```
+    </Note>
+  </Tab>
+  <Tab title="Remote website (on an external server)">
+    Most users run their Pi on a home network that is not accessible from the internet. A remote Allsky Website lets you publish your sky images on any internet-accessible server.
+
+    <Warning>
+      Make sure Allsky is working on your Pi before attempting a remote website installation. If you also plan to run a local website, get it working first — remote and local configuration files are not automatically kept in sync.
+    </Warning>
+
+    <Steps>
+      <Step title="Create an allsky directory on the remote server">
+        Log in to your remote server and create an `allsky` directory to hold the website files. Note the full server path — you will need it when configuring the upload settings in the WebUI.
+      </Step>
+      <Step title="Configure upload settings on the Pi">
+        In the WebUI, open **Allsky Settings** and go to the **Websites and Remote Server Settings** section. Fill in the **Remote Website** subsection (server name, username, password, image directory) so Allsky knows how to connect. Do **not** enable **Use Remote Website** yet.
+      </Step>
+      <Step title="Run the remote installation script">
+        On the Pi, run:
+
+        ```bash
+        cd ~/allsky
+        ./remoteWebsiteInstall.sh
+        ```
+
+        This uploads the website code and creates a default remote configuration file on the server. If the upload fails, the script will report why.
+      </Step>
+      <Step title="Configure the remote website">
+        In the WebUI, go to the **Editor** page and select `remote_configuration.json (remote Allsky Website)` from the drop-down. Edit the settings as needed. Each time you save, the updated configuration file is automatically uploaded to the remote server.
+
+        <Warning>
+          Always update the remote website configuration through the WebUI. Do **not** edit the configuration file directly on the remote server.
+        </Warning>
+      </Step>
+      <Step title="Share your website">
+        Your remote server is now ready. Give the URL to your family and friends so they can enjoy your images.
+      </Step>
+    </Steps>
+
+    ### Remote server requirements
+
+    The remote server must support:
+
+    - **PHP 7 or newer**
+    - The `imagecreatefromjpeg` PHP function (used to generate keogram and startrails thumbnails — missing it shows "No thumbnail" but does not break anything else)
+    - Optionally, the `ffmpeg` command and PHP `exec` function for timelapse video thumbnails. Most shared hosting providers disable these for security reasons; enable **Upload Timelapse Thumbnail** in the WebUI to work around this.
+  </Tab>
+</Tabs>
+
+## What the website displays
+
+The Allsky Website shows visitors:
+
+- The most recently captured sky image
+- Keograms (horizontal strips showing the sky over time)
+- Startrail composites
+- Timelapse videos
+- A gallery of images from previous nights
+
+All content displayed by the website is uploaded by Allsky automatically as it captures images throughout the night.
+
+## Post-installation configuration
+
+After installation, you can adjust the appearance and behavior of the website by modifying its settings in the WebUI. If you have both a local and a remote website, each has its own configuration file accessible through the **Editor** page — changes to one are **not** automatically applied to the other.
+
+## Cleaning old files from the website
+
+Over time, old images, keograms, and videos accumulate on the website. You can configure automatic cleanup to keep storage usage under control.
+
+### Local website
+
+Set the **Days To Keep on Pi Website** value in the WebUI. Allsky removes files older than that threshold every morning automatically.
+
+### Remote website
+
+Because remote server configurations vary, cleanup must be done manually:
+
+<Steps>
+  <Step title="Connect to the remote server">
+    Use FTP, SFTP, or SSH to log in to your remote web server.
+  </Step>
+  <Step title="Remove old media files">
+    For each of the `startrails`, `keograms`, and `videos` directories, delete any `.jpg`, `.png`, or `.mp4` files that are older than your desired threshold (for example, one month).
+
+    <Warning>
+      Do **not** delete the `index.php` files inside those directories. Removing them will break the website's gallery navigation.
+    </Warning>
+  </Step>
+  <Step title="Remove old thumbnails">
+    Inside each of the above directories, enter the `thumbnails` sub-directory and delete files older than your threshold.
+  </Step>
+</Steps>

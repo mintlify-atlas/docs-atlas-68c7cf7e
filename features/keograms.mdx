@@ -1,0 +1,113 @@
+---
+title: "Keograms: visualize an entire night at a glance"
+description: "Allsky automatically generates keogram images each night — a single timeline image stitched from the central column of every captured frame."
+---
+
+A **keogram** is an image that gives a quick view of a day's sky activity. Allsky creates one automatically at the end of each night by extracting a thin vertical column from every saved image and stitching those columns together from left to right. The result is a single wide image that represents the entire day or night at a glance — clouds, stars, aurora, and weather patterns become visible as horizontal bands across the keogram.
+
+<Note>
+  The keogram is built from the **central vertical column** (1 pixel wide) of each image, placed left-to-right in capture order. This means the keogram shows only what happened at the center of the frame. Events on the east or west edges of your sky will not appear.
+</Note>
+
+Only images that are saved to disk are included in a keogram. If you have disabled saving of daytime or nighttime images, those periods will be absent from the keogram.
+
+## How keogram generation works
+
+After Allsky completes a night of capturing, `endOfNight.sh` runs automatically. If keogram generation is enabled, it calls `generateForDay.sh --keogram DATE`, which in turn invokes the `keogram` binary. The binary reads every image in the day's image directory, extracts the central column from each, and writes the combined output to a keogram file stored alongside that night's images.
+
+The keogram covers the prior 24 hours and is stored in the nightly image set directory.
+
+## Enabling automatic generation
+
+Open the WebUI, go to **Allsky Settings**, and find the **Keograms** sub-section. Enable the **Generate** setting. When enabled, a keogram is created automatically at the end of every night.
+
+To also upload the keogram to your Allsky Website or remote server, enable the **Upload** setting in the same sub-section.
+
+## Creating a keogram manually
+
+Use the `generateForDay.sh` command to create (and optionally upload) a keogram for any past date:
+
+```bash
+# Create a keogram for July 10, 2024
+generateForDay.sh --keogram 20240710
+
+# Create and upload
+generateForDay.sh --upload --keogram 20240710
+```
+
+The command uses the settings from the **Keograms** sub-section of the WebUI.
+
+## Orientation and rotation
+
+For the best results, north should be at the top of each captured image. If it is not, add a rotation argument in the **Keogram Extra Parameters** setting in the WebUI:
+
+```text
+--rotate DEG
+```
+
+Replace `DEG` with the number of degrees of rotation needed. With a fisheye lens and correct rotation, the bottom of the keogram represents the southern horizon and the top represents the northern horizon.
+
+## Advanced: running the `keogram` binary directly
+
+<Note>
+  Running the binary directly is possible but not recommended for normal use. The `generateForDay.sh` wrapper handles all required arguments automatically.
+</Note>
+
+```text
+Usage: keogram -d <imagedir> -e <ext> -o <outputfile> [optional arguments]
+
+Arguments:
+  -d | --directory <str>    directory from which to load images (required)
+  -e | --extension <str>    image extension to process (required)
+  -o | --output-file <str>  name of output file (required)
+  -r | --rotate <float>     degrees to rotate image, counterclockwise (0)
+  -s | --image-size <int>x<int>  only process images of a given size
+  -n | --no-label           disable hour labels
+  -C | --font-color <str>   label font color in HTML format (#0000ff)
+  -L | --font-line <int>    font line thickness (3)
+  -N | --font-name <str>    font name (simplex)
+  -S | --font-size <float>  font size (2.0)
+  -x | --image-expand       expand image to match source proportions
+  -Q | --max-threads <int>  limit maximum number of processing threads
+  -q | --nice-level <int>   nice(2) level of processing threads (10)
+```
+
+Example:
+
+```bash
+cd ~/allsky/bin
+./keogram -d images/20240710 -e jpg -o images/20240710/keogram/keogram.jpg \
+  --rotate 42 --font-size 2
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Keogram is not being created">
+    Verify that the **Generate** setting is enabled in the Keograms sub-section of the WebUI. If it is enabled, run the command manually and check for errors:
+
+    ```bash
+    generateForDay.sh --keogram DATE
+    ```
+
+    Replace `DATE` with a valid date such as `20250710`.
+  </Accordion>
+
+  <Accordion title="Keogram is created but not uploaded">
+    Verify that the **Upload** setting is enabled. If it is, run with `--debug` to see the upload details:
+
+    ```bash
+    generateForDay.sh --upload --debug --keogram DATE
+    ```
+
+    If the upload continues to fail, run `testUpload.sh` to diagnose the connection to your remote server.
+  </Accordion>
+
+  <Accordion title="Keogram is tall and narrow">
+    Enable the **Expand** setting in the Keograms sub-section of the WebUI. This expands the keogram to match the proportions of the source images, avoiding a very tall and narrow output.
+  </Accordion>
+
+  <Accordion title="Some time periods are missing or resolution mismatches">
+    All images included in a keogram must have the same resolution. If your daytime and nighttime **Binning** settings differ, or if you changed **Image Resize** or **Image Crop** during the day, only images matching the first image's resolution will be used. Ensure consistent settings across the full capture period.
+  </Accordion>
+</AccordionGroup>

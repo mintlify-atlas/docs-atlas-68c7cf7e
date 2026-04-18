@@ -1,0 +1,125 @@
+---
+title: "Frequently asked questions about Allsky"
+description: "Answers to common Allsky questions covering startup problems, image quality, SD card storage, camera focus, upgrading, and sharing your camera."
+---
+
+This page collects answers to the questions asked most often by Allsky users. If you do not find an answer here, search the [GitHub Discussions](https://github.com/AllskyTeam/allsky/discussions) board — there is a good chance someone else has already asked the same question.
+
+<AccordionGroup>
+
+<Accordion title="After starting Allsky, all I get is 'Allsky software is starting up'">
+Allsky is most likely dropping every image because each one is judged too dark or too bright before it can be saved and displayed. To diagnose:
+
+1. Watch the log in real time:
+   ```bash
+   tail -f /var/log/allsky.log
+   ```
+2. **Manual exposure/gain:** Adjust the **Gain** and **Exposure** settings in the WebUI for the active time of day.
+3. **Auto exposure/gain:** The software uses your manual values as its starting point and tries several exposures before settling on the best one. Seeing the startup message for a minute or two is normal. If it never resolves, increase **Max Auto-Exposure** and **Max Gain** so the algorithm has more room to work with.
+4. Temporarily set **Remove Bad Images Thresholds** to `0` to let all images through regardless of brightness. This lets you see what the camera is actually capturing, which helps identify whether the problem is exposure-related or something else.
+</Accordion>
+
+<Accordion title="My SD card is getting full — how do I store images somewhere else?">
+You have three main options:
+
+**A. Buy a bigger SD card.** Straightforward and inexpensive, but SD cards are slower and less reliable than solid-state storage. Follow the [Move Allsky Images to an SSD or NVMe Drive](/guides/image-storage) guide.
+
+**B. Replace the SD card with an SSD.** Faster and more reliable, with much more capacity. For Pi 5 users, an NVMe SSD paired with an NVMe HAT is an excellent option. Follow the same imaging instructions as above.
+
+**C. Add a second drive (USB thumb drive or SSD).** The easiest option — no reinstall required:
+
+1. Attach the drive and confirm you can write to it.
+2. Run:
+   ```bash
+   allsky-config move_images
+   ```
+   The command will prompt for the destination path (e.g., `/media/SSD/images`) and ask whether to move, copy, or leave your existing images.
+
+The new image location is preserved across future Allsky upgrades as long as you instruct the upgrade script to reuse the existing `allsky-OLD` directory.
+
+<Tip>
+To reduce write wear on your SD card, move the `~/allsky/tmp` directory to RAM: run `allsky-config recheck_tmp` and accept the defaults. The directory and its contents are ephemeral and are cleared on every reboot, so nothing important is lost.
+</Tip>
+</Accordion>
+
+<Accordion title="Why is there a long delay between pictures?">
+The total time between consecutive pictures is controlled by three settings:
+
+- **Delay** (daytime or nighttime) — the pause added after each exposure.
+- **Max Auto-Exposure** — even in manual mode, this value pads each cycle.
+- **Consistent Delays Between Images** — when set to `Yes`, the interval is always `Delay + Max Auto-Exposure`, regardless of actual exposure length.
+
+If the gap is longer than expected, check your **Max Auto-Exposure** setting. Setting it to a large value (e.g., 60 seconds) will add that many seconds to every inter-frame gap even if actual exposures are much shorter.
+</Accordion>
+
+<Accordion title="How do I reduce wear on my SD card?">
+SD cards have a finite write endurance. The biggest source of writes during Allsky's normal operation is the `~/allsky/tmp` directory, which holds temporary files for each frame.
+
+If you did not opt in during installation, enable RAM-backed temporary storage now:
+
+```bash
+allsky-config recheck_tmp
+```
+
+Accept the defaults at each prompt. The directory is recreated automatically on each boot, so no permanent data is lost.
+
+<Note>
+Pi 5 users can go further by replacing the SD card entirely with an NVMe SSD via an NVMe HAT. This eliminates SD wear and significantly increases speed and available storage.
+</Note>
+</Accordion>
+
+<Accordion title="How do I focus my allsky camera?">
+**Manual-focus lenses:**
+
+1. Make temporary WebUI changes: disable **Save**, set **Delay** to `500` ms, and (during the day) set **Max Auto-Exposure** to `500` ms. The **Live View** will refresh every second, giving rapid visual feedback.
+2. If you use the `module` **Overlay Method**, enable **Show Focus Metric** and add the `${FOCUS}` variable to your overlay. Higher numbers mean sharper focus.
+3. Turn the focus ring; the image and focus metric will degrade as you go too far. Back off in small increments to find the peak.
+4. The most accurate method is to focus at night on stars — zoom in and adjust until stars are as small as possible.
+5. Tighten the focus lock screw when done and revert your temporary settings.
+
+**Auto-focus lenses (e.g., RPi Module 3):**
+
+Use `libcamera-still` to find the best focus position, starting at infinity:
+
+```bash
+libcamera-still --timeout 1 --shutter 5000 --lens-position 0.0
+```
+
+Increase `--lens-position` in small steps until focus peaks, then **disable** auto focus permanently by adding `--lens-position X` to the **Extra Parameters** setting in the WebUI. Auto focus adds several seconds to each daytime image and minutes to nighttime images, so leaving it on is rarely worthwhile.
+</Accordion>
+
+<Accordion title="The /var/log/allsky.log file has disappeared — how do I get it back?">
+Try each step in order, stopping as soon as the log file reappears:
+
+1. Restart Allsky:
+   ```bash
+   sudo systemctl restart allsky
+   ```
+2. Restart the system logging daemon:
+   ```bash
+   sudo systemctl restart syslog
+   ```
+3. Reboot the Pi.
+4. Wait until after midnight — the log sometimes reappears on its own. This is a known Linux behaviour that also affects other services, not specific to Allsky.
+</Accordion>
+
+<Accordion title="How do I change the icons on the Allsky Website?">
+The icons displayed on the left sidebar of an Allsky Website are controlled by the `leftSidebar` setting in the Website editor. Each entry has an `icon` sub-setting. Icons come from [Font Awesome 6.2.1](https://fontawesome.com/search?m=free&o=r) — search for a free icon name there and enter it in the setting. Not every icon renders correctly, so test your choice after saving.
+</Accordion>
+
+<Accordion title="How do I upgrade Allsky?">
+Run the upgrade script from the allsky directory:
+
+```bash
+cd ~/allsky
+./install.sh
+```
+
+The script detects an existing installation and runs in upgrade mode. When prompted, tell it to reuse the existing `allsky-OLD` directory to preserve your image history and any custom image storage location.
+
+<Note>
+After upgrading, review the [changelog](/reference/changelog) for any settings that changed name, changed format, or were removed. Point releases (e.g., `_06`) are generally safe to install without a full settings review.
+</Note>
+</Accordion>
+
+</AccordionGroup>

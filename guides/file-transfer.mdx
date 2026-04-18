@@ -1,0 +1,127 @@
+---
+title: "Copy files between your Pi and computer"
+description: "Use SAMBA, SCP, or a network drive to access and copy Allsky images and logs between your Raspberry Pi and a Windows or Mac computer."
+---
+
+Working with Allsky often means retrieving images, reviewing log files, or copying configuration backups to your PC or Mac. There are several ways to transfer files between the Pi and your computer — the right choice depends on how many files you need, your operating system, and whether you want ongoing access or a one-time copy.
+
+## Common Allsky paths to know
+
+| Path | Contents |
+|---|---|
+| `~/allsky/images/` | Captured sky images, organized by date |
+| `~/allsky/darks/` | Dark frame files |
+| `~/allsky/logs/` | Allsky log files |
+| `~/allsky/config/` | Configuration files |
+| `/opt/allsky/` | Allsky modules (if installed) |
+
+## SAMBA network share
+
+SAMBA is a service that makes the Pi's home directory appear as a network drive on Windows and macOS. Once installed, you can browse, copy, and edit files using your operating system's built-in file manager — no extra software required.
+
+### Install SAMBA on the Pi
+
+Run the following on your Pi and follow the prompts:
+
+```bash
+allsky-config samba
+```
+
+SAMBA only needs to be installed once per Pi image. If you re-image your SD card or storage device, you must run this command again.
+
+### Connect from your computer
+
+<Tabs>
+  <Tab title="Windows">
+    After installing SAMBA, the Pi appears in Windows File Explorer as a network device (the name matches the Pi's hostname, for example `ALLSKY`).
+
+    <Steps>
+      <Step title="Open File Explorer and find the Pi">
+        In Windows File Explorer, browse to **Network** in the left panel. You should see a device with your Pi's hostname. Inside it you will find a share called `pi_home` (or the username you installed Allsky as).
+      </Step>
+      <Step title="Map as a network drive (optional)">
+        Right-click the `pi_home` share and select **Map network drive...**. Choose any drive letter and check **Connect using different credentials**, then click **Finish**.
+      </Step>
+      <Step title="Enter your credentials">
+        In the login dialog:
+
+        - **User name**: `WORKGROUP\pi` (replace `pi` with your Allsky login name)
+        - **Password**: the SAMBA password you set during installation
+
+        Check **Remember my credentials** to avoid being prompted on future connections.
+      </Step>
+      <Step title="Access your files">
+        The mapped drive now appears in File Explorer. You can browse to `allsky/images/`, `allsky/logs/`, and any other directory as if it were a local folder. Drag and drop files to copy them to your PC.
+      </Step>
+    </Steps>
+
+    **Alternative tools for Windows:**
+
+    - [WinSCP](https://winscp.net/) — graphical SFTP/SCP client; connect with your Pi's IP, SSH port 22, and Pi login credentials
+    - [FileZilla](https://filezilla-project.org/) — graphical FTP/SFTP client; use SFTP with port 22
+  </Tab>
+  <Tab title="macOS">
+    macOS can connect to SAMBA shares through Finder directly.
+
+    <Steps>
+      <Step title="Connect to the Pi from Finder">
+        In Finder, choose **Go → Connect to Server...** (or press **Cmd+K**). Enter:
+
+        ```
+        smb://allsky
+        ```
+
+        Replace `allsky` with your Pi's hostname or IP address if it differs.
+      </Step>
+      <Step title="Authenticate">
+        When prompted, enter:
+
+        - **Name**: `pi` (or your Allsky login name)
+        - **Password**: the SAMBA password you set during installation
+
+        Select the `pi_home` share when asked which share to mount.
+      </Step>
+      <Step title="Access your files">
+        The share appears on your Desktop and in the Finder sidebar under **Locations**. Browse to `allsky/images/`, `allsky/logs/`, or any other directory and copy files as needed.
+      </Step>
+    </Steps>
+
+    **Alternative tools for macOS:**
+
+    - **Terminal + SCP**: for one-off file copies without mounting a drive (see below)
+    - [FileZilla](https://filezilla-project.org/) — graphical SFTP client for macOS; connect via SFTP on port 22
+    - [Cyberduck](https://cyberduck.io/) — another graphical SFTP client for macOS
+  </Tab>
+</Tabs>
+
+## SCP / SFTP (command line)
+
+If you prefer the terminal or only need to copy a few specific files, SCP is available on both Windows (Windows 10+) and macOS without any additional software.
+
+Copy a single file from the Pi to your current directory:
+
+```bash
+scp pi@allsky:~/allsky/logs/allsky.log .
+```
+
+Copy an entire directory recursively:
+
+```bash
+scp -r pi@allsky:~/allsky/images/20240710 ./20240710
+```
+
+Copy a file from your computer to the Pi:
+
+```bash
+scp myconfig.json pi@allsky:~/allsky/config/myconfig.json
+```
+
+Replace `pi` with your username and `allsky` with the Pi's hostname or IP address. You will be prompted for your SSH password unless you have set up key-based authentication.
+
+<Tip>
+  If you copy a large directory of images frequently, consider mounting the Pi as a permanent network drive using SAMBA instead — it is faster than repeated SCP commands and lets you use your normal file manager.
+</Tip>
+
+## Small text files
+
+For small text files (configuration snippets, log excerpts) that fit on one screen, the quickest method is to open the file in the WebUI's **Editor** page, select all the text, and paste it into a file on your computer. No network configuration is needed.

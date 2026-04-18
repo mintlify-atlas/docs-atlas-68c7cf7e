@@ -1,0 +1,236 @@
+---
+title: "Troubleshooting common Allsky problems"
+description: "Diagnose and fix the most common Allsky Camera issues including image problems, upload failures, WebUI errors, and timelapse failures."
+---
+
+When something goes wrong with Allsky, the log file is your first stop. Run `tail -f /var/log/allsky.log` in a terminal to watch events in real time, or use the WebUI's built-in log viewer to browse recent entries without leaving your browser.
+
+## Troubleshooting tools
+
+Before diving into specific problems, two tools are especially useful across all categories.
+
+**`allsky-config`** is an interactive command that can display system information, check camera support, and configure features. Run it with no arguments for a menu-driven interface, or pass an action name directly:
+
+```bash
+allsky-config --help
+allsky-config show_supported_cameras --zwo
+allsky-config prepare_logs   # increases Debug Level before reproducing a bug
+```
+
+**`htop`** shows CPU usage, memory, and swap in real time, which is helpful when diagnosing slow or failing timelapse generation:
+
+```bash
+sudo apt install htop
+htop
+```
+
+---
+
+## Common problems and fixes
+
+<AccordionGroup>
+
+<Accordion title="Allsky not starting — stuck on 'software is starting up'">
+This message appears when Allsky is dropping every image because each one is judged too dark or too bright.
+
+**Steps to diagnose:**
+
+1. Check the log for clues:
+   ```bash
+   tail -f /var/log/allsky.log
+   ```
+2. If you are using **manual** exposure/gain, adjust those values in the WebUI's **Allsky Settings** page.
+3. If you are using **auto** exposure/gain, the software tries several exposures before settling. The message is normal for the first minute or so. If it persists longer, the auto-exposure algorithm may not be converging.
+4. Temporarily set **Remove Bad Images Thresholds** to `0` to see what the images actually look like — this reveals whether the problem is exposure or something else entirely.
+5. If auto-exposure still cannot find a good value, increase the **Max Auto-Exposure** and **Max Gain** settings.
+</Accordion>
+
+<Accordion title="Images too dark or too bright">
+**Manual exposure mode:** Adjust the **Gain**, **Exposure**, and/or **Bin** settings for the relevant time of day (daytime and nighttime have separate controls). During the day you typically want **Bin** = `1x1` and **Gain** = `0`.
+
+**Auto exposure mode:** Change the **Mean Target** to shift the overall brightness up or down. The algorithm will vary gain and exposure up to the maximums you specify. If images remain too dark even at maximum, increase **Max Gain** or **Max Auto-Exposure**.
+
+**Stars hard to see even though overall brightness looks correct:** Try image stretching — see [Exposure, Gain, and Stretch Settings](/configuration/exposure-gain-saturation) to bring out faint detail without blowing out the sky background.
+</Accordion>
+
+<Accordion title="Images are corrupted (repeating pixels, banding, or double frames)">
+Image corruption usually has one of two causes.
+
+**Insufficient power or thermal throttling:** Open the WebUI's **System** page and check the throttle status. If it does not say **No throttling**, your power supply or cooling is inadequate. Replace the power supply with a genuine Raspberry Pi one, or add active cooling to the enclosure.
+
+**ZWO camera firmware error:** Power-cycle the camera's USB port without rebooting the Pi:
+
+```bash
+sudo uhubctl -a 2 $(grep -l 03c3 /sys/bus/usb/devices/*/idVendor | \
+    cut -d / -f 6 | sed -Ee 's/(.*)[.]([0-9]+)$/-l \1 -p \2/')
+```
+
+If corruption recurs frequently, check your USB cable and try a different port.
+</Accordion>
+
+<Accordion title="Camera not detected">
+1. Check that the camera cable is firmly seated at both ends.
+2. Confirm the **Camera Type** setting in the WebUI matches the camera you have connected (ZWO or RPi).
+3. For RPi cameras, verify the camera interface is enabled: `sudo raspi-config` → **Interface Options** → **Camera**.
+4. For ZWO cameras, check that the USB bandwidth is not saturated if multiple USB devices are connected.
+5. Run `allsky-config show_supported_cameras` to see which cameras the installed driver recognises.
+
+USB reset messages like the following in system logs are harmless and come from the ZWO software — you can ignore them:
+
+```
+Sep 15 17:44:28 Pi-Allsky kernel: usb 1-1.5: reset high-speed USB device number 4 using dwc_otg
+```
+</Accordion>
+
+<Accordion title="Upload failures (FTP / SCP / SFTP)">
+Run the built-in upload test first:
+
+```bash
+testUpload.sh --website   # test remote Allsky Website uploads
+testUpload.sh --server    # test remote server uploads
+```
+
+**Common mistakes:**
+
+- **Server Name** should look like `myserver.com` — no `http://`, `https://`, or trailing `/`.
+- **Website URL** / **Server URL** must begin with `http://` or `https://`.
+- If you cannot log in to the server manually, Allsky cannot either. Verify credentials independently before configuring Allsky.
+
+**Certificate errors:**
+
+| Error | Fix |
+|---|---|
+| `Host key verification failed` | SSH to the server once and accept the host key: `ssh -p 22 username@host` |
+| `certificate common name doesn't match` | Add `set ssl:check-hostname false` to `~/.lftprc` or the **FTP Commands** setting |
+| `Certificate verification: Not trusted` | Add `set ssl:verify-certificate no` to **FTP Commands** or `~/.lftprc` |
+
+If the Pi's IP address changed, remove the stale entry from `~/.ssh/known_hosts`.
+</Accordion>
+
+<Accordion title="WebUI not accessible">
+**Forgotten or incorrect password:** Delete the authentication file to restore defaults:
+
+```bash
+sudo rm -f ~/allsky/config/raspap.auth
+```
+
+**Cannot reach the WebUI at all:** Check the lighttpd error log for clues:
+
+```bash
+cat /var/log/lighttpd/error.log
+```
+
+If you are using the Pi's hostname in the URL (e.g., `http://allsky`), try the Pi's IP address instead (e.g., `http://192.168.0.21`). Hostname resolution can fail on some networks.
+
+Check that the Allsky service is running:
+
+```bash
+sudo systemctl status allsky
+```
+</Accordion>
+
+<Accordion title="Timelapse video not generated">
+First confirm that timelapse is enabled: in the **Timelapse Settings** section of **Allsky Settings**, verify **Generate** is enabled. For mini-timelapse, **Number of Images** must be greater than `0`.
+
+Then check the log for an error like:
+
+```
+*** timelapse.sh: ERROR: ffmpeg failed.
+```
+
+**Out-of-memory failures** produce either of these messages:
+
+```
+/home/pi/allsky/scripts/timelapse.sh: line 294: Killed ffmpeg -y -f image2 ...
+x264 [error]: malloc of size 38600544 failed
+```
+
+Steps to resolve:
+
+1. Reduce the timelapse **Width** and **Height** to 1920 × 1080 (or an aspect-ratio-correct equivalent). Most displays are HD and the smaller file also uploads faster.
+2. Increase swap space if you see the `Killed ffmpeg` error.
+3. If you see the `malloc` error with a high-resolution camera (RPi HQ, ZWO ASI183, etc.), the `libx264` codec's 4096 × 2304 limit is exceeded. Either reduce resolution or switch **VCODEC** to `libx265` with **Extra Parameters** set to `-x265-params crf=30`. Note that `libx265` can take over 3 hours on a Pi 4 for 1500 images.
+4. Monitor `ffmpeg` memory live: run `htop` in one terminal while running `generateForDay.sh --timelapse DATE` in another.
+
+**Zero-length files** also cause short or missing timelapses. Remove them and regenerate:
+
+```bash
+removeBadImages.sh DATE
+generateForDay.sh --timelapse DATE
+```
+
+<Note>
+The message `deprecated pixel format used, make sure you did set range correctly` is harmless and can be ignored.
+</Note>
+</Accordion>
+
+<Accordion title="Timelapse video is blocky or poor quality">
+Video encoding discards data to reduce file size. The default settings are a reasonable starting point but may produce artefacts in fast-moving areas like clouds.
+
+1. **Reduce resolution.** Halving the camera resolution (e.g., 2028 × 1520 for the RPi HQ) reduces file size, speeds processing, and usually goes unnoticed on HD monitors. Set either **Image Resize Width/Height** (affects every saved image) or the timelapse **Width/Height** (video only).
+2. **Add a Video Coding Level.** Set timelapse **Extra Parameters** to `-level 3.1`; increase to `3.2`, `4`, `4.1`, or `4.2` if needed.
+3. **Increase the Bitrate.** The default is around 5000 kb/s. Raising it keeps more data per frame, but values above 25000 kb/s may cause playback stalls on slow networks.
+</Accordion>
+
+<Accordion title="'Can't save image because one is already being saved'">
+This occurs when processing time (saving + post-processing) exceeds the interval between exposures. PNG files can take 10 seconds or more to save on a Pi 4 because there is no hardware PNG acceleration.
+
+**Fixes:**
+- Save as **JPG** instead of PNG, or increase the **Delay** between images.
+- Move `~/allsky/tmp` to a RAM filesystem (configured during installation, or run `allsky-config recheck_tmp`).
+- Replace a slow SD card with a faster one.
+</Accordion>
+
+<Accordion title="git clone errors during installation or upgrade">
+These errors usually indicate a temporary network or GitHub server problem:
+
+```
+error: RPC failed; curl 92 HTTP/2 stream 0 was not closed cleanly
+fatal: early EOF
+fatal: index-pack failed
+```
+
+Check your network connection first. If you can reach other Internet sites, wait a few hours and try again — the error is almost always transient.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## How to report a problem
+
+<Steps>
+
+<Step title="Search existing reports first">
+Check [GitHub Discussions](https://github.com/AllskyTeam/allsky/discussions) and [GitHub Issues](https://github.com/AllskyTeam/allsky/issues) to see if someone else has already reported the problem. If so, add to their post rather than opening a new one.
+</Step>
+
+<Step title="Use the automated support tool (preferred)">
+If your WebUI is working, use the **Getting Support** page in the WebUI. It collects the necessary diagnostic information automatically and guides you through creating a GitHub Discussion.
+</Step>
+
+<Step title="Use the manual method (WebUI not working)">
+If Allsky did not install or the WebUI is inaccessible, run the support script manually:
+
+```bash
+allsky-config prepare_logs   # enable full debug logging
+# wait until the problem reproduces, then:
+cd ~/allsky
+./support.sh
+```
+
+The script creates a support log in `~/allsky/html/support`. Attach it to a new [Problem Discussion](https://github.com/AllskyTeam/allsky/discussions/new?category=problems) on GitHub along with any screenshots of error messages.
+</Step>
+
+<Step title="Choose the correct report type">
+- **Question** → [Q&A Discussion](https://github.com/AllskyTeam/allsky/discussions/new?category=q-a)
+- **Feature request** → [Feature Request Discussion](https://github.com/AllskyTeam/allsky/discussions/new?category=new-feature-requests)
+- **Confirmed bug** → [Problem Discussion](https://github.com/AllskyTeam/allsky/discussions/new?category=problems)
+- **Anything else** → [General Discussion](https://github.com/AllskyTeam/allsky/discussions/new)
+</Step>
+
+</Steps>
+
+<Warning>
+GitHub only accepts certain file types as attachments. If your file has an unsupported extension, append `.txt` to the filename (e.g., `settings.json.txt`) before uploading.
+</Warning>

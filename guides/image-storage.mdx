@@ -1,0 +1,110 @@
+---
+title: "Move Allsky images to an SSD or NVMe drive"
+description: "Extend your storage and improve reliability by moving Allsky image storage from the SD card to an external SSD, NVMe, or USB drive."
+---
+
+Allsky captures and stores a continuous stream of images, keograms, startrails, and timelapse videos. By default these accumulate in `~/allsky/images/` on the Pi's SD card. SD cards wear out faster under heavy write loads and fill up quickly when storing days or weeks of sky images — migrating to an external drive solves both problems.
+
+<Warning>
+  SD cards have a limited number of write cycles and are not designed for the sustained, high-frequency writes that Allsky produces. Running Allsky long-term from an SD card risks data loss and card failure. Moving to an SSD or NVMe drive significantly improves both longevity and read/write performance.
+</Warning>
+
+## Storage options
+
+<CardGroup cols={2}>
+  <Card title="USB SSD" icon="hard-drive" href="#migration-steps">
+    An external SSD connected over USB 3 is the most accessible upgrade. External SSDs typically come with their own enclosure and cable. Internal SATA SSDs require a SATA-to-USB-B adapter.
+  </Card>
+  <Card title="NVMe HAT (Pi 5+)" icon="microchip" href="#migration-steps">
+    The fastest option for Pi 5 and newer. Requires an M.2 HAT board mounted on top of or underneath the Pi. The official Raspberry Pi M.2 HAT accepts 30 mm and 42 mm NVMe disks.
+  </Card>
+</CardGroup>
+
+## Hardware adapters
+
+Before you begin, make sure you have the right adapter to connect your new storage device to the Pi or to a PC/Mac for imaging:
+
+- **SD card**: a micro SD-to-USB adapter or a computer with a built-in SD card reader
+- **SSD (internal/bare)**: a SATA-to-USB-B adapter cable
+- **SSD (external with enclosure)**: the cable that came with the drive
+- **NVMe**: an M.2-to-USB adapter for initial imaging, plus an M.2 HAT for use in the Pi
+
+<Warning>
+  If you plan to use an SSD or NVMe disk, confirm that the drive and its HAT or adapter fit inside your allsky camera case before purchasing.
+</Warning>
+
+## Migration steps
+
+The steps below cover the most common scenario: you have a working Pi and want to move to a new storage device while preserving your existing Allsky images and configuration.
+
+<Steps>
+  <Step title="Image the new storage device">
+    Connect the new device to your PC or Mac. Download and run the [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Select your Pi model, choose the new device as the storage target, and select the recommended operating system (**Raspberry Pi OS 64-bit** for Pi 4 and newer; **Raspberry Pi OS Legacy 32-bit** for older models).
+
+    When prompted to apply OS customisation settings, click **Edit Settings** and configure:
+
+    - **Hostname**: `allsky` (or a unique name if you have multiple Pis)
+    - **Username and password**: `pi` and your chosen password
+    - **Wireless LAN**: your Wi-Fi network credentials
+    - **SSH**: enable with password authentication
+  </Step>
+  <Step title="Connect the new device to the Pi">
+    With the Pi still running the old device, connect the new device:
+
+    - **SD card or SSD**: plug it into a USB 3 port on the Pi (USB 2 if no USB 3 is available)
+    - **NVMe**: power the Pi off, attach the HAT and disk per the manufacturer's instructions, then power back on. The Pi should boot from the *old* device. Verify by running `cd; ls allsky` — if you see the allsky directory contents, you're on the old device.
+
+    To find the path to the new device, run:
+
+    ```bash
+    allsky-config get_filesystems
+    ```
+
+    Follow any instructions it provides.
+  </Step>
+  <Step title="Copy your Allsky files to the new device">
+    Assuming the new device is mounted at `/media/SSD`, copy the allsky directory:
+
+    ```bash
+    sudo cp -Ra ~/allsky /media/SSD
+    cd /media/SSD
+    mv allsky allsky-OLD
+    ```
+
+    If `/opt/allsky` exists, copy it too:
+
+    ```bash
+    sudo cp -Ra /opt/allsky /media/SSD/opt
+    ```
+
+    Copy any other files you want to keep from your home directory, including hidden files starting with `.`.
+  </Step>
+  <Step title="Mark the old device for identification">
+    Create a marker file on the old device so you can confirm which device is which later:
+
+    ```bash
+    cd; touch OLD_DEVICE
+    ```
+  </Step>
+  <Step title="Swap the devices">
+    Shut the Pi down and remove power. Swap the old and new devices — for example, if both are SD cards, move the old card to a USB adapter and insert the new card into the Pi's SD slot. Power the Pi back on.
+
+    Verify you are running from the new device:
+
+    ```bash
+    cd; ls OLD_DEVICE
+    ```
+
+    You should get a "does not exist" error. If the file is found, the Pi booted from the old device — check your work before continuing.
+  </Step>
+  <Step title="Install Allsky and restore your data">
+    Run the Allsky installer and tell it you want to use the prior version of Allsky. The installer will restore your saved images, dark frames, and configuration files from the `allsky-OLD` directory automatically.
+  </Step>
+  <Step title="Remove the old device">
+    Once you have confirmed everything is working and you have copied all the files you need, unplug the old device from the Pi. Keep it somewhere safe in case you need to retrieve additional files later.
+  </Step>
+</Steps>
+
+<Note>
+  If you only have one storage device and cannot add a second one simultaneously, you must first back up `~/allsky` (and `/opt/allsky` if it exists) to a USB drive, PC, or Mac, then re-image the single device, restore from backup, and reinstall Allsky. Running `allsky-config samba` on the Pi makes it easy to copy files to a PC or Mac over the network before you begin.
+</Note>

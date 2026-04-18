@@ -1,0 +1,90 @@
+---
+title: "How Allsky captures, processes, and publishes images"
+description: "Understand how Allsky's capture loop, module pipeline, and end-of-night processing work together to fully automate your sky camera."
+---
+
+Allsky is an automated sky camera system that runs continuously on a Raspberry Pi. Once installed, it starts on boot, determines whether it is day or night, captures images on a schedule, processes each image through a configurable pipeline, and generates summary products at the end of every night — all without manual intervention.
+
+## Key components
+
+<CardGroup cols={2}>
+  <Card title="allsky.sh" icon="play" href="https://github.com/AllskyTeam/allsky">
+    The main entry point. Invoked automatically by the `allsky` systemd service on boot. It validates configuration and launches the appropriate capture program for your camera type.
+  </Card>
+  <Card title="capture_ZWO / capture_RPi" icon="camera" href="https://github.com/AllskyTeam/allsky">
+    Camera-specific capture binaries. `capture_ZWO` communicates directly with ZWO cameras via the ASI library. `capture_RPi` delegates to `libcamera-still` for Raspberry Pi and compatible cameras.
+  </Card>
+  <Card title="saveImage.sh" icon="floppy-disk" href="https://github.com/AllskyTeam/allsky">
+    Runs after every captured image. Validates the image, applies resize/crop/stretch transformations, adds overlays, handles uploads, and triggers mini-timelapse generation.
+  </Card>
+  <Card title="endOfNight.sh" icon="moon" href="https://github.com/AllskyTeam/allsky">
+    Runs when a night-to-day transition is detected. Generates the startrails image, keogram, and timelapse video from all images captured during the night, then optionally uploads them.
+  </Card>
+</CardGroup>
+
+## The image capture flow
+
+<Steps>
+  <Step title="Allsky starts on boot">
+    The `allsky` systemd service runs `allsky.sh` automatically when the Pi boots. The script checks that Allsky is configured, verifies the camera is present, and determines which capture binary to launch — either `capture_ZWO` or `capture_RPi` — based on your camera type setting.
+  </Step>
+
+  <Step title="Day vs. night detection">
+    Before taking pictures, the capture program uses **sunwait** (a bundled utility compiled from source during installation) to calculate sunrise and sunset times for your configured latitude and longitude. This determines when to switch between daytime and nighttime exposure settings and when to trigger end-of-night processing.
+  </Step>
+
+  <Step title="Capture loop begins">
+    The capture program reads your WebUI settings to configure exposure time, gain, delay between images, and many other parameters. It then enters a continuous loop: take a picture, save it to `~/allsky/tmp/image.jpg`, call `saveImage.sh`, sleep until the next capture interval, and repeat.
+
+    `capture_ZWO` controls the camera directly through the ZWO library and receives direct sensor feedback. `capture_RPi` invokes `libcamera-still`, passing the exposure time and output filename.
+  </Step>
+
+  <Step title="Post-capture image processing (saveImage.sh)">
+    After each capture, `saveImage.sh` runs synchronously while the capture program prepares the next exposure. It performs the following in order:
+
+    1. Checks whether the image file is corrupt.
+    2. Checks whether the image is too dark or too bright according to your settings; if so, deletes the image and exits.
+    3. Optionally resizes, crops, and stretches the image.
+    4. Runs the **module pipeline** — a sequence of user-configured modules (e.g., star counter, overlay renderer) executed by `flow-runner.py`. Modules can pass data to one another; for example, the Star Count module can supply its count to the Overlay module for display in the image.
+    5. Uploads the image if configured, optionally resizing it first.
+    6. Generates or appends to a mini-timelapse if enabled and enough images have accumulated.
+    7. Saves a permanent copy named `image-YYYYMMDDHHMMSS.jpg` into the current day's folder under `~/allsky/images/`.
+  </Step>
+
+  <Step title="End-of-night processing (endOfNight.sh)">
+    When the capture program detects a night-to-day transition, it calls `endOfNight.sh` before resuming the daytime capture loop. Based on your settings, this script:
+
+    - Generates a **keogram** — a timeline image built by extracting a 1-pixel-wide central column from each night image and stitching them left to right.
+    - Generates a **startrails** image by stacking all night images.
+    - Generates a **timelapse video** from all images captured in the last 24 hours.
+    - Uploads any of the above to the Allsky Website (local or remote) if configured.
+  </Step>
+</Steps>
+
+## WebUI administration
+
+The WebUI runs via the `lighttpd` web server installed on the Pi and is accessible at `http://allsky.local` after installation. It provides:
+
+- **Allsky Settings** — configure all camera, exposure, and pipeline settings
+- **Image viewer** — browse the current live image and all saved images, keograms, startrails, and timelapse videos
+- **Overlay Editor** — drag-and-drop editor for designing image overlays (text, graphics, sensor data)
+- **Module configuration** — choose which modules run after each capture and in what order
+- **Status and logs** — monitor Allsky's running state and review log output
+
+A public page at `http://your-pi-ip/public.php` lets you share the current image without requiring login.
+
+## Directory structure
+
+All Allsky files (except a few system files) live under `~/allsky`. The key directories set in `variables.sh` are:
+
+| Path | Purpose |
+|---|---|
+| `~/allsky/` | Root installation directory (`ALLSKY_HOME`) |
+| `~/allsky/config/` | All configuration files: `settings.json`, `options.json`, overlay templates, module configs, logs |
+| `~/allsky/images/` | Captured images organised into per-day subdirectories (`ALLSKY_IMAGES`) |
+| `~/allsky/tmp/` | Temporary files: current `image.jpg`, upload queues, PID files. Optionally mounted as a RAM disk to reduce SD card writes (`ALLSKY_TMP`) |
+| `~/allsky/scripts/` | Shell scripts including `saveImage.sh`, `endOfNight.sh`, and utilities |
+| `~/allsky/bin/` | Compiled capture binaries (`capture_ZWO`, `capture_RPi`) |
+| `~/allsky/html/` | WebUI files served by lighttpd, including the Allsky Website and documentation |
+| `~/allsky/darks/` | Dark frame images used for hot-pixel subtraction |
+| `/var/log/allsky.log` | Main Allsky runtime log |

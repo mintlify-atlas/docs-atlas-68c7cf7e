@@ -1,0 +1,98 @@
+---
+title: "Allsky version history and release notes"
+description: "Release notes for Allsky Camera v2024.12.06, covering recent bug fixes, enhancements, removed settings, and upgrade instructions for each point release."
+---
+
+The current release is **v2024.12.06_06**. This page summarises the key changes for recent releases. For the complete list of every change, open the **Documentation → Version Change Log** page in your WebUI.
+
+<Note>
+To upgrade Allsky, run `./install.sh` from the `~/allsky` directory. The script detects your existing installation and runs in upgrade mode. When prompted, choose to reuse the `allsky-OLD` directory to preserve your image history and custom storage locations. After upgrading, review the notes below for any settings that require action.
+</Note>
+
+---
+
+## v2024.12.06
+
+<Warning>
+**v2024.12.06 is the last major release to support the Buster operating system.** It is also the last major release to include the "legacy" overlay method. Plan to migrate to a supported OS and the new Overlay Editor before the next major release.
+</Warning>
+
+### v2024.12.06_06 — Point Release 6 (current)
+
+This is a targeted bug-fix release. Upgrading is recommended only if you are encountering one of the bugs listed below.
+
+**Bug fixes:**
+- Fixed a hang when downloading the support log from the **Getting Support** WebUI page.
+- Fixed WebUI **System Messages** displaying duplicate messages hundreds or thousands of times instead of once with an occurrence count.
+- Fixed a message being truncated when the `de421.bsp` ephemeris file could not be downloaded.
+- Fixed a rare situation where the **Module Manager** would fail to display any modules due to corruption in a module's metadata.
+
+**Enhancements:**
+- When 4 consecutive image-capture errors occur with an RPi camera, the last error message is now shown in the WebUI's **System Messages** section.
+
+---
+
+### v2024.12.06_05 — Point Release 5
+
+**Changes that may require action after upgrading:**
+
+If your Keogram **Font Color** setting used three space- or comma-separated numbers (e.g., `255 0 128`), you must **reverse the order** after upgrading. The format previously accepted `blue green red`; it now uses `red green blue` to be consistent with web colour conventions. The `#RRGGBB` hex format is unchanged and now also accepts 3-digit shorthand (e.g., `#fff`).
+
+**Bug fixes:**
+- Increased the RPi camera image timeout from 30 seconds to a longer value. The prior limit caused false timeouts when the Pi was busy generating timelapse videos.
+- Entering an uninstalled locale in the WebUI now shows an error message and lists the available locales rather than silently failing.
+- Mono cameras were calculating mean image brightness twice using different formulas. The second calculation (used for the Remove Bad Images decision) now uses the same formula as the first.
+
+---
+
+### v2024.12.06_04 — Point Release 4
+
+**Enhancements:**
+- When upgrading from a recent version, a restart may be all that is needed. The installer will tell you exactly what is required.
+- The WebUI now shows an optional note alongside the "new version available" notification (e.g., "Contains an important security update; please install").
+- The **Status** indicator at the top of the WebUI now updates automatically every few seconds.
+- The **System** page now loads very quickly and updates key metrics automatically. The **Refresh** button has been removed. `~/allsky/tmp` usage is now displayed.
+- The **Editor** page shows a warning message if the file being edited is corrupted.
+- RPi camera hangs during image capture now time out instead of hanging Allsky indefinitely.
+- RPi camera error messages are now written to the log file so they are not overwritten by the next exposure.
+- A message is added to the WebUI when timelapse, star trails, or keogram creation fails during end-of-night processing.
+- The Pi's hostname is now shown at the top of the WebUI, which is useful when managing multiple Pi systems.
+
+**Bug fixes:**
+- The **Getting Support** page and `support.sh` script no longer fail with "Argument list too long".
+- Setting a target temperature for cooled ZWO cameras now works correctly.
+- `install.sh` no longer corrupts the Website configuration file when adding meteor fields.
+- `remoteWebsiteInstall.sh` now handles servers that return empty responses under certain conditions.
+- `upload.sh` no longer attempts to process files that do not exist.
+- RAM detection for non-Raspberry Pi boards is now accurate, which affects swap space sizing and the **Computer** setting.
+- The **Notification Images** setting (which allowed disabling startup/status images) has been removed. Notification images are always enabled as they provide essential status information.
+
+---
+
+### v2024.12.06_03 — Point Release 3
+
+**Enhancements:**
+- RPi cameras that report sensor temperature (HQ, Module 3, Arducam 16 MP) now support **dark frames**. The `TEMPERATURE_C` and `TEMPERATURE_F` variables can be displayed in overlays for these cameras.
+- Dark frames are now saved as `.png` files for better quality. If you have existing `.jpg` darks in `~/allsky/darks`, re-create them and remove the old `.jpg` files.
+
+**Bug fixes:**
+- MOON variables now work in the **Overlay Editor** (the `de421.bsp` file downloads correctly).
+- All "Click here to …" links in the WebUI now work.
+- Allsky Website analytics tracking (`analyticsTracking.js`) now works correctly.
+- An issue adding images in overlays was fixed.
+- `remoteWebsiteInstall.sh` now works when **Image Directory** is empty.
+- Duplicate **System Messages** now display the correct occurrence count.
+
+**Removed settings:**
+- **Camera** and **Computer** — these are now set automatically during installation.
+
+**New settings:**
+- **Equipment Info** — an optional field for additional equipment notes.
+
+---
+
+## Where to find the full changelog
+
+The complete list of every change, including all point releases and the full text of all bug descriptions, is available in the **Documentation → Version Change Log** page accessible from your WebUI. It covers the entire history of the project going back to earlier major versions.
+
+For open bugs and current limitations, see the [Known Issues](/reference/known-issues) page.

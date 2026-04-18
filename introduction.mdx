@@ -1,0 +1,75 @@
+---
+title: "Allsky Camera: Open-source Raspberry Pi Sky Camera"
+description: "Allsky turns a Raspberry Pi and a compatible camera into a fully automated all-sky observatory — capturing, processing, and publishing night-sky images."
+---
+
+Allsky is an open-source software system that transforms a Raspberry Pi and a compatible camera into a fully automated all-sky observatory. It captures wide-angle sky images throughout the night, processes them into keograms, startrails, and timelapse videos, and can publish them to a local or remote website — all automatically.
+
+<CardGroup cols={2}>
+  <Card title="Requirements" icon="list-check" href="/getting-started/requirements">
+    Check which Raspberry Pi models and cameras are supported before you begin.
+  </Card>
+  <Card title="Installation" icon="download" href="/getting-started/installation">
+    Step-by-step guide to installing Allsky on your Raspberry Pi.
+  </Card>
+  <Card title="How Allsky Works" icon="gears" href="/getting-started/how-allsky-works">
+    Understand the capture loop, post-processing pipeline, and WebUI.
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/configuration/allsky-settings">
+    Configure camera settings, overlays, uploads, and more via the WebUI.
+  </Card>
+</CardGroup>
+
+## What Allsky does
+
+Allsky runs continuously on your Raspberry Pi, handling every aspect of sky imaging automatically:
+
+- **Captures images** using ZWO ASI cameras or Raspberry Pi camera modules throughout the night
+- **Processes each image** through a customizable module pipeline — adding overlays, counting stars, detecting meteors, and more
+- **Generates nightly products** including keogram timelines, startrail composites, and timelapse videos
+- **Publishes to websites** via FTP or SCP to a local Pi website or a remote server
+- **Provides a WebUI** for live monitoring, image browsing, and full configuration
+
+## Explore the features
+
+<CardGroup cols={2}>
+  <Card title="Overlays" icon="layer-group" href="/features/overlays">
+    Add text, images, and data fields to every captured image using the drag-and-drop Overlay Editor.
+  </Card>
+  <Card title="Modules" icon="puzzle-piece" href="/features/modules">
+    Extend Allsky with post-capture modules for star counting, meteor detection, weather data, and more.
+  </Card>
+  <Card title="Keograms" icon="chart-line" href="/features/keograms">
+    Generate a single image showing the entire night's sky activity as a timeline.
+  </Card>
+  <Card title="Startrails" icon="star" href="/features/startrails">
+    Stack nightly images to produce stunning startrail composite photographs.
+  </Card>
+  <Card title="Timelapse" icon="film" href="/features/timelapse">
+    Automatically create timelapse videos from each night's captured images.
+  </Card>
+  <Card title="Dark Frames" icon="circle-half-stroke" href="/features/dark-frames">
+    Remove hot pixels from images using dark frame subtraction.
+  </Card>
+</CardGroup>
+
+## Get up and running
+
+<Steps>
+  <Step title="Check requirements">
+    Confirm you have a supported Raspberry Pi (Zero 2, 2, 3, 4, or 5) running Raspberry Pi OS, and a compatible ZWO or Raspberry Pi camera. See [Requirements](/getting-started/requirements).
+  </Step>
+  <Step title="Install Allsky">
+    Run the installer script on your Raspberry Pi. The process takes 15–30 minutes and sets up the software, WebUI, and all dependencies. See [Installation](/getting-started/installation).
+  </Step>
+  <Step title="Configure your camera">
+    Open the WebUI at `http://your-pi-ip/` and configure your camera type, exposure settings, and upload destinations. See [Allsky Settings](/configuration/allsky-settings).
+  </Step>
+  <Step title="Start capturing">
+    Allsky starts automatically after installation. Point your camera at the sky and images will begin appearing in the WebUI within seconds.
+  </Step>
+</Steps>
+
+<Note>
+  The WebUI includes a direct link to this documentation. You can also find help, ask questions, and report issues on the [Allsky GitHub Discussions](https://github.com/AllskyTeam/allsky/discussions) page.
+</Note>

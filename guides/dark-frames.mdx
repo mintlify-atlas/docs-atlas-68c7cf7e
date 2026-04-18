@@ -1,0 +1,99 @@
+---
+title: "Capture and apply dark frames to images"
+description: "Step-by-step guide to capturing dark frames with your Allsky camera and enabling automatic dark frame subtraction to remove hot pixels."
+---
+
+All camera sensors produce noise — pixels that appear bright even when no light reaches them. At night, with long exposures, this noise becomes visible as white or colored specks scattered across your images. A **dark frame** is an image taken with the lens fully covered so the sensor records only its own noise. Subtracting a dark frame from a captured sky image (a **light frame**) leaves behind only the sky, significantly reducing hot pixels and fixed-pattern noise.
+
+## Types of camera noise
+
+Noise can take several forms:
+
+- **Hot pixels** — pixels that are stuck on, appearing white on a mono camera or red, green, or blue on a color camera
+- **Salt-and-pepper pattern noise** — a random speckle pattern visible across the frame, especially in long exposures
+- **Cold pixels** — pixels that are always off; only noticeable when they appear dark inside a bright region
+
+Noise increases with both temperature and exposure length. Newer cameras produce less noise than older ones, but all cameras produce some. Even the Hubble Space Telescope captures dark frames — which is why it is cooled to extremely cold temperatures.
+
+<Note>
+  If you change the **Gain** or **Binning** settings after capturing dark frames, you must discard the old darks and capture new ones. Noise characteristics depend directly on these settings. If you think you may revert to the original settings, save the old darks somewhere else rather than deleting them.
+</Note>
+
+## When to capture dark frames
+
+You can take dark frames at any time of day — the software uses your nighttime settings regardless. The most important requirement is that **no light reaches the sensor** during capture.
+
+A few tips:
+
+- Cloudy nights are ideal so you are not missing clear sky time
+- Take dark frames before mounting the camera in a hard-to-reach location (e.g., on top of a tall pole)
+- Lens caps that come with many cameras allow small amounts of light through. Use a dark towel or similar material over the lens in addition to the cap, or take darks at night or in a dark room
+- Noise changes with temperature, so recapture darks whenever you notice too much noise, or a few times a year when seasons change
+
+For best coverage, aim for a range of temperatures rather than a single set. A 2–3 degree spread is usually sufficient — for example, 21 °C, 24 °C, and 27 °C. Some users put the camera in a freezer and then take darks as it warms to cover a wide temperature range in one session.
+
+## Capture dark frames
+
+<Steps>
+  <Step title="Enable dark frame capture in the WebUI">
+    Go to the **Allsky Settings** page in the WebUI and set **Take Dark Frames** to **Yes**. Click the **Save changes** button.
+
+    Allsky will stop running and wait for you to manually start it. This pause gives you time to cover the lens before capture begins.
+  </Step>
+  <Step title="Cover the lens completely">
+    Place a dark towel or opaque cover over the camera lens and/or dome. Confirm that absolutely **no** light can enter. Even a tiny amount of light will contaminate the dark frame.
+  </Step>
+  <Step title="Start Allsky">
+    Start the Allsky service:
+
+    ```bash
+    sudo systemctl start allsky
+    ```
+
+    Allsky will begin capturing dark frames using your nighttime **Max Auto-Exposure**, **Gain**, and **Binning** settings. Auto-exposure, auto-gain, and any overlay settings are automatically disabled during dark frame capture.
+
+    Dark frames are saved in `~/allsky/darks/` with filenames based on the sensor temperature at the time of capture — for example, `21.png` for a frame taken at 21 °C. A new dark is created each time the sensor temperature changes by 1 degree C.
+  </Step>
+  <Step title="Stop dark frame capture">
+    When you have captured darks across the temperature range you want, set **Take Dark Frames** back to **No** in the WebUI and click **Save changes**.
+
+    Allsky will again stop and wait for you to start it manually.
+  </Step>
+  <Step title="Uncover the lens">
+    Remove all covers from the lens and dome before restarting.
+  </Step>
+  <Step title="Restart Allsky in normal mode">
+    Start Allsky again to resume normal image capture:
+
+    ```bash
+    sudo systemctl start allsky
+    ```
+  </Step>
+</Steps>
+
+## Enable dark frame subtraction
+
+Once you have captured dark frames, enable subtraction so Allsky applies them automatically at night:
+
+<Steps>
+  <Step title="Enable subtraction in the WebUI">
+    On the **Allsky Settings** page, set **Use Dark Frames** to **Yes** and click **Save changes**.
+
+    Allsky restarts and will subtract dark frames from all nighttime images going forward. You will see an error in the WebUI if no dark frame files are found in `~/allsky/darks/`.
+  </Step>
+</Steps>
+
+## How dark frame selection works
+
+When dark frame subtraction is active, Allsky looks in `~/allsky/darks/` for the dark frame whose filename is numerically closest to the current sensor temperature. For example, if the sensor is at 21 °C and the darks directory contains `17.png`, `20.png`, and `23.png`, Allsky selects `20.png` because it is only 1 degree away from the current temperature.
+
+The software matches by filename only — it does not inspect the contents of the dark file. As long as your darks are reasonably current and your camera behaves normally, the closest-temperature dark frame gives the best noise reduction results.
+
+<AccordionGroup>
+  <Accordion title="Where dark frames are stored">
+    During capture, each dark is first written to `~/allsky/tmp/dark.png`, then moved to `~/allsky/darks/` and renamed to reflect the sensor temperature, for example `21.png`.
+  </Accordion>
+  <Accordion title="Verifying results">
+    To confirm that dark frame subtraction is working, compare a nighttime image taken before enabling subtraction with one taken after. Hot pixels that were previously visible as bright specks should be significantly reduced or absent in the subtracted image.
+  </Accordion>
+</AccordionGroup>

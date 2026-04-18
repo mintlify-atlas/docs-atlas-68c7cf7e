@@ -1,0 +1,128 @@
+---
+title: "Known issues and limitations in Allsky"
+description: "Known bugs, hardware limitations, and workarounds for Allsky Camera v2024.12.06, covering image capture, overlays, modules, and unsupported hardware."
+---
+
+This page lists known bugs and limitations in the current Allsky release (`v2024.12.06_06`). Where a workaround exists it is described below each issue. Where a fix is planned, the expected release is noted.
+
+<Warning>
+**v2024.12.06 is the last major release that supports the Buster operating system and the "legacy" overlay method.** If you are still on Buster or using the legacy overlay, plan to migrate before the next major release.
+</Warning>
+
+---
+
+## Image capture
+
+<AccordionGroup>
+
+<Accordion title="ZWO: Auto Gain and Auto White Balance do not work in Snapshot mode">
+**Type:** Limitation (ZWO cameras only)
+
+When the **ZWO Exposure Method** is set to the default value of `Snapshot`, the **Auto Gain** and **Auto White Balance** settings have no effect.
+
+**Workaround:**
+- **Auto Gain** should not normally be used regardless, because it conflicts with Allsky's own **Auto Exposure** algorithm.
+- If you need **Auto White Balance**, switch **ZWO Exposure Method** to a non-Snapshot mode.
+
+**Future plans:** None — this is a driver-level limitation.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Overlays
+
+<AccordionGroup>
+
+<Accordion title="Fonts randomly change to Glyphicons in the Text Editor">
+**Type:** Known issue
+
+Fonts in the Overlay Text Editor sometimes change to display as **Glyphicons** (symbol characters) instead of the font you selected. This is a display-only glitch in the editor; the actual font written into the overlay image is correct.
+
+**Workaround:** None — reload the editor page.
+
+**Future plans:** Will be fixed in the next major release.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Modules
+
+<AccordionGroup>
+
+<Accordion title="Modules can only run once per flow">
+**Type:** Limitation
+
+A module can only execute once per flow (once per image, once per day/night transition, etc.). There is no way to run the same module multiple times within a single flow.
+
+**Workaround:** None.
+
+**Future plans:** Will be changed in the next release.
+</Accordion>
+
+<Accordion title="Overlay Module may be disabled on first run">
+**Type:** Known issue
+
+The **Overlay Module** can appear disabled the first time it runs. This happens because the module must download the JPL ephemeris data file (`de421.bsp`) on initial setup, which can take a while on a slow Internet connection. The module disables itself if the download does not complete within the expected window.
+
+**Workaround:** Re-enable the module in the **Module Manager** after the download has completed.
+
+**Future plans:** Will be fixed in the next release.
+</Accordion>
+
+<Accordion title="Additional modules installed but not all appear in the Module Manager">
+**Type:** Known issue
+
+After installing additional modules, not all of them show up in the Module Manager list.
+
+**Workaround:** Enable **Show Experimental** in the Module Manager's settings. Hidden modules are often experimental and are filtered out by default.
+
+**Future plans:** Will be fixed in the next release.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Other
+
+<AccordionGroup>
+
+<Accordion title="Switching camera type with multiple cameras connected is unreliable">
+**Type:** Limitation
+
+If three or more cameras are connected to a single Pi — including at least one RPi camera and at least one ZWO camera — and you switch the **Camera Type** in the WebUI, which of the available cameras of the new type becomes active is undefined. You may also see errors about missing or empty fields.
+
+For example: if you have one ZWO and two RPi cameras, switching from ZWO to RPi does not let you choose which RPi camera to use.
+
+**Workaround:** After switching, click the **Allsky Settings** link to refresh the page. The correct camera will usually be selected after the refresh.
+
+**Future plans:** The **Camera Type** and **Camera Model** settings will be merged into a single setting that lets you choose the exact camera, eliminating this ambiguity.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Hardware notes
+
+The following hardware combinations are known to have limitations or are not recommended.
+
+<Warning>
+**ZWO ASI120 series cameras** (including the T7C, which is an OEM version of the ASI120MC-mini) are not recommended. They produce high noise, many hot pixels, and frequent errors. Many users have replaced theirs.
+</Warning>
+
+<Warning>
+**Pi Zero** — The Pi Zero's CPU is too slow and its memory too limited for reliable Allsky use. Timelapse generation will almost certainly fail.
+</Warning>
+
+<Warning>
+**Pi Zero 2** — The Pi Zero 2 has a faster CPU than the original Pi Zero but still has limited memory. Timelapse generation may or may not work. Future Allsky versions are likely to require more resources than the Pi Zero 2 can provide.
+</Warning>
+
+<Warning>
+**Pi clones** — With the sole exception of Le Potato (which only works with a ZWO ASI120 camera), no Pi clone boards have been found to be compatible with Allsky.
+</Warning>

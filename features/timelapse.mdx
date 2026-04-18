@@ -1,0 +1,91 @@
+---
+title: "Timelapse videos from nightly captures"
+description: "Allsky creates timelapse videos automatically at the end of each night and optionally generates mini-timelapses after every few images."
+---
+
+A **timelapse** is a video assembled from multiple still images that shows sky changes over time — clouds drifting during the day, stars wheeling across the night sky, or weather fronts rolling in. Allsky supports two types of timelapse video, both configurable from the **Timelapse Settings** section of the WebUI's **Allsky Settings** page.
+
+## Daily timelapse
+
+The daily timelapse is created once per day, automatically at the end of nighttime. It includes all images saved in the prior 24 hours — both daytime and nighttime frames.
+
+Enable it via the **Generate** setting in the **Daily Timelapse** sub-section of the WebUI. When enabled, Allsky creates (and optionally uploads) the timelapse at the end of every night using `endOfNight.sh`, which in turn calls `timelapse.sh` and `ffmpeg` to encode the video.
+
+### Creating a daily timelapse manually
+
+```bash
+# Create a timelapse for July 10, 2025
+generateForDay.sh --timelapse 20250710
+
+# Create and upload
+generateForDay.sh --upload --timelapse 20250710
+```
+
+### Upload thumbnail
+
+If you have a remote Allsky Website, enable the **Upload Thumbnail** setting so the timelapse thumbnail is generated on the Pi and uploaded alongside the video.
+
+### Resizing for performance
+
+If your camera has many pixels, consider resizing the timelapse to reduce encoding time and file size. Update the **Width** and **Height** settings in the Daily Timelapse sub-section. Cutting each dimension in half is a good starting point.
+
+## Mini timelapse
+
+A mini timelapse contains a limited, rolling window of recent images and is recreated throughout the day. Each new mini timelapse replaces the previous one, so only one mini timelapse exists at a time.
+
+Enable it by setting **Number Of Images** to a value greater than `0` in the **Mini Timelapse** sub-section of the WebUI. The mini timelapse will contain that many of the most recent images.
+
+A new mini timelapse is generated after every **Frequency** images are captured. The smaller the frequency value, the more often the mini timelapse is regenerated and the more processing power is consumed.
+
+<Note>
+  Mini timelapses are not designed to be created manually because internal configuration files are updated as part of the generation process.
+</Note>
+
+Recommendations for the **Number Of Images** setting:
+
+- A value of `5` produces a video that typically lasts less than a second.
+- A value of `50` is a good starting point on a Pi 4.
+- Very large values increase encoding time and can slow down other Allsky operations on lower-powered hardware.
+
+## Controlling timelapse length
+
+Two factors determine how long a timelapse plays:
+
+1. **Number of frames** — more images produce a longer video
+2. **Frames per second (FPS)** — more FPS makes the video shorter
+
+### Adjusting the number of frames
+
+To **increase** video length, reduce the **Delay** between image captures (the interval between shots). A delay as low as 1000–2000 ms may be achievable depending on your Pi model, image size, and overlay complexity. Make sure **Consistent Delays Between Images** is disabled when using short delays.
+
+To **decrease** video length, increase the delay or reduce the number of captured images.
+
+### Adjusting FPS
+
+A video with 2000 frames at the default 25 FPS plays for 80 seconds. The same video at 10 FPS plays for 200 seconds. Lower FPS values produce a "jerkier" result; most viewers find videos over a minute or two too long to watch comfortably.
+
+To experiment with FPS settings before committing:
+
+```bash
+cd ~/allsky/images
+mkdir test
+# Copy about 100 images from another directory to test/
+
+generateForDay.sh --timelapse test
+mv test/allsky-test.mp4 test/allsky-test-25fps.mp4
+
+# Adjust FPS in WebUI, then regenerate
+generateForDay.sh --timelapse test
+mv test/allsky-test.mp4 test/allsky-test-10fps.mp4
+
+# Watch both and choose the one you prefer, then clean up
+rm -fr test
+```
+
+<Note>
+  The Raspberry Pi Zero and Pi Zero 2 have very limited processing power. Timelapse creation on these devices is significantly slower than on a Pi 3 or Pi 4 and may cause Allsky to fall behind on image captures if done during the day. Consider generating timelapses manually during periods of low activity on Zero-class hardware.
+</Note>
+
+## Viewing and sharing
+
+Both timelapse types are viewable in the WebUI from the image gallery. If uploading is configured, videos are transferred to your Allsky Website or remote server automatically after generation.

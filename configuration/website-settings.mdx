@@ -1,0 +1,133 @@
+---
+title: "Configure the local and remote Allsky Website"
+description: "Set up and configure the local or remote Allsky Website to publicly display sky images, keograms, startrails, and timelapse videos."
+---
+
+The Allsky Website lets you display your most recent captured image on a webpage, along with saved timelapse videos, keograms, and startrails. Constellations and other objects can be overlaid on the image, and aurora activity can be listed. The Website can run locally on your Raspberry Pi, on a separate remote server, or on both.
+
+<Note>
+  The **Allsky Website** and a **remote server** are different concepts. The Allsky Website is a full web application that displays images, timelines, and overlays. A remote server is a non-Allsky web server you already operate (for example, an observatory site) where Allsky simply uploads files. See [Upload images to a remote server](/configuration/remote-server) for the remote server workflow.
+</Note>
+
+## Local vs remote website
+
+<CardGroup cols={2}>
+  <Card title="Local Website" icon="house" href="#configure-website-settings">
+    Installed automatically with Allsky and served from your Raspberry Pi. No separate installation is needed — just enable it in the WebUI.
+  </Card>
+  <Card title="Remote Website" icon="globe" href="#configure-website-settings">
+    Installed on an external server. Requires a separate installation step before you enable it in the WebUI.
+  </Card>
+</CardGroup>
+
+For a **local** Allsky Website, you only need to configure and enable it as described below — no additional installation is required.
+
+Before you configure a **remote** Website you must first install it on the external server, then return to this page.
+
+## Configure website settings
+
+The Website is configured by editing a JSON file through the WebUI's **Editor** page.
+
+<Steps>
+  <Step title="Open the Editor">
+    In the WebUI, click the **Editor** link in the navigation.
+  </Step>
+  <Step title="Select the configuration file">
+    In the drop-down at the bottom of the Editor page, select the file for the Website you want to configure:
+
+    - `configuration.json` — for the **local** Allsky Website
+    - `remote_configuration.json` — for the **remote** Allsky Website (only available if you installed a remote Website)
+
+    You can safely ignore any message about the Website not being enabled yet — you will do that in the next step.
+  </Step>
+  <Step title="Edit the settings">
+    The configuration file is split into two sections:
+
+    1. **`config`** — settings for the webpage image display and constellation overlay.
+    2. **`homePage`** — settings that change the look and feel of the Website's home page, including icons on the left sidebar, the information popout on the right, and an optional background image.
+
+    <Warning>
+      Make sure all values marked `XX_NEED_TO_UPDATE_XX` are replaced with real values before saving.
+    </Warning>
+
+    Setting **names** in the file look like `camelCase` and should generally not be changed unless you are, for example, adding a new sidebar icon. Names must always be enclosed in double quotes.
+
+    Change setting **values** as desired. Values are color-coded by type in the Editor:
+    - Text (string): surrounded by quotes
+    - Numbers: not quoted
+    - Booleans: `true` or `false`, not quoted
+
+    Some settings — such as `latitude` — are also managed by the WebUI and should only be changed there. The WebUI will propagate any changes to the appropriate files.
+
+    <Tip>
+      You can add personal comments to the file by adding a unique setting name and string value, for example: `"myComment1": "Need to check the next setting"`. Be sure all setting names remain unique.
+    </Tip>
+  </Step>
+  <Step title="Enable the Website">
+    In the WebUI's **Allsky Settings** page, scroll to the **Website and Remote Server Settings** section and enable the Website in either the **Local Website Settings** or **Remote Website Settings** subsection, depending on which site you are configuring.
+
+    Remote Websites also need the server name, login credentials, and image directory filled in.
+  </Step>
+</Steps>
+
+## `config` settings reference
+
+These settings control the image display and the constellation overlay.
+
+<Info>
+  It is important to update your WebUI settings **before** configuring the Allsky Website so you only have to enter location and camera information once.
+</Info>
+
+| Setting | Default | Description |
+|---|---|---|
+| `imageName` | `/current/tmp/image.jpg` (local) or `image.jpg` (remote) | Path to the current allsky image. Normally should not be changed. |
+| `location` | Auto-set | The location of your camera. Sent to the Allsky Map server. |
+| `latitude` | Auto-set | Latitude as a decimal number (negative = Southern hemisphere) or as `41.79N`. Sent to Allsky Map and used by the constellation overlay. |
+| `longitude` | Auto-set | Longitude as a decimal number (negative = west) or as `101.9W`. |
+| `camera` | Auto-set | Camera type and model. Use `equipmentinfo` for freeform equipment notes. |
+| `lens` | Auto-set | Short description of the camera's lens. |
+| `computer` | Auto-set | Raspberry Pi model. Use `equipmentinfo` for freeform notes. |
+| `equipmentinfo` | Auto-set | Optional freeform information about your equipment. |
+| `owner` | Auto-set | The camera owner — your name, an association, or an observatory. |
+| `auroraForecast` | `false` | Display the 3-day aurora forecast in the top-right corner when `true`. |
+| `auroraMap` | Auto-set | Aurora oval map for the `north` or `south` hemisphere. |
+| `intervalSeconds` | `5` | Seconds between checks for a new image. Can be set to half the interval between exposures to reduce browser CPU usage. |
+| `showOverlayAtStartup` | `false` | Show the constellation overlay immediately on page load. |
+| `overlayWidth` | `875` | Width of the constellation overlay in pixels. |
+| `overlayHeight` | `875` | Height of the constellation overlay in pixels. |
+| `overlayOffsetLeft` | `0` | Horizontal offset of the overlay in pixels (positive = right). |
+| `overlayOffsetTop` | `0` | Vertical offset of the overlay in pixels (positive = down). |
+| `az` | `0` | Azimuth rotation of the overlay: 0 = north up, 90 = north right. |
+| `imageWidth` | `900` | Width of the captured image in pixels. Height is calculated automatically to maintain aspect ratio. |
+| `opacity` | `0.5` | Opacity of the constellation overlay (0.0–1.0). |
+| `projection` | `fisheye` | Leave at default for fisheye lenses, which most allsky cameras use. |
+| `constellations` | `true` | Show constellation lines. |
+| `constellationlabels` | `false` | Show constellation names. |
+| `gridlines_eq` | `true` | Show RA/Dec grid lines. |
+| `showgalaxy` | `true` | Show galaxy outlines. |
+| `meridian` | `false` | Display the meridian line. |
+| `ecliptic` | `false` | Display the ecliptic line. |
+| `cardinalpoints` | `true` | Display cardinal points (N, S, E, W). |
+| `lang` | `en` | Language for object names. Available languages are in `~/allsky/html/allsky/virtualsky/lang`. |
+| `live` | `true` | Update the overlay display in real time. Rarely changed. |
+
+## `homePage` settings reference
+
+These settings control the appearance of the Website's home page.
+
+| Setting | Default | Description |
+|---|---|---|
+| `title` | `XX_NEED_TO_UPDATE_XX` | Text displayed next to the Allsky logo in the upper-left. Also used as the browser tab title — keep it short. |
+| `og_description` | `XX_NEED_TO_UPDATE_XX` | Description used when the Website icon is shared to social media. Often the same as `title`. |
+| `backgroundImage` | — | Optional background image for the home page. Sub-settings: `url` (path or URL) and `style` (optional CSS). |
+| `loadingImage` | `loading.jpg` | Image displayed while the first captured image loads. Can be a URL or filename. Store custom files in the `myFiles` directory. |
+| `imageBorder` | `false` | Add a border around the image to distinguish it from the black background. |
+| `includeGoogleAnalytics` | `false` | Include the `analyticsTracking.js` file. Leave `false` unless you use Google Analytics. |
+| `includeLinkToMakeOwn` | `true` | Display the "Build your own" link at the bottom-right of the page. |
+| `personalLink` | — | Optional link displayed at the top of the home page. Sub-settings: `prelink`, `message`, `url`, `title`, `style`. |
+| `thumbnailsizex` | `100` | Horizontal size of keogram, startrails, and timelapse thumbnails. |
+| `thumbnailsizey` | `75` | Vertical size of keogram, startrails, and timelapse thumbnails. |
+| `thumbnailsortorder` | `ascending` | Sort order for thumbnails. `ascending` = newest to oldest; `descending` = oldest to newest. |
+| `leftSidebar` | — | Settings for each icon in the left sidebar. Each icon has `display`, `url`, `title`, `icon` (Font Awesome classes), and optional `style` sub-settings. |
+| `popoutIcons` | — | Settings for entries in the right-side information popout. Each entry has `display`, `label`, `icon`, `variable` or `value`, and optional `style` sub-settings. |
+| `favicon` | `allsky-favicon.png` | Browser tab favicon. Store custom favicons in the `myFiles` directory. |

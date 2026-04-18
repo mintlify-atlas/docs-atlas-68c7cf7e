@@ -1,0 +1,107 @@
+---
+title: "Startrails: composite star movement images"
+description: "Allsky stacks all nightly images to automatically generate startrail composites that show the arc of stars across the sky throughout the night."
+---
+
+A **startrails** image is created by stacking all nighttime images from a single night on top of each other. Because the Earth rotates, each image captures stars at a slightly different position. When stacked, the stars appear as arcs that sweep across the sky — the longer the night, the longer the trails. In the northern hemisphere, stars near Polaris (the North Star) trace tight circles while stars near the horizon trace wider arcs.
+
+Only nighttime images that are saved to disk are included in a startrails image. If you have disabled saving of nighttime images, no startrails can be generated.
+
+## How generation works
+
+At the end of each night, `endOfNight.sh` runs automatically. If startrails generation is enabled, it calls `generateForDay.sh --startrails DATE`, which in turn invokes the `startrails` binary. The binary reads all nighttime images in the specified directory, filters out images that are too bright (clouds, moon, etc.), and stacks the remaining images by taking the maximum pixel value at each position. The result is saved alongside the night's image set.
+
+## Enabling automatic generation
+
+Open the WebUI, go to **Allsky Settings**, and find the **Startrails** sub-section. Enable the **Generate** setting. When enabled, a startrails image is created automatically at the end of every night.
+
+To also upload the image to your Allsky Website or remote server, enable the **Upload** setting in the same sub-section.
+
+## Creating a startrails image manually
+
+Use the `generateForDay.sh` command to create (and optionally upload) a startrails image for any past date:
+
+```bash
+# Create startrails for July 10, 2025
+generateForDay.sh --startrails 20250710
+
+# Create and upload
+generateForDay.sh --upload --startrails 20250710
+```
+
+The command uses the settings from the **Startrails** sub-section of the WebUI.
+
+## Brightness threshold
+
+The **Brightness Threshold** setting is the key configuration parameter for startrails. Images have an average (mean) brightness value from `0.0` (pure black) to `1.0` (pure white). Any image with an average brightness **greater than** the threshold is skipped during startrails generation.
+
+The default threshold is `0.1`, which is typical for a moonless night. Images taken during a full moon or with significant cloud cover will have higher average brightness and should be excluded.
+
+<Warning>
+  If your startrails image shows no star trails and you see the message **"No images below threshold 0.100, writing the minimum image only"**, your images are too bright and the Brightness Threshold needs to be increased. See the troubleshooting section below.
+</Warning>
+
+To find the right threshold for your setup, run:
+
+```bash
+allsky-config get_brightness_info
+```
+
+This shows the minimum, maximum, mean, and median brightness values from recent nights. Set the **Brightness Threshold** to the maximum nighttime brightness value or slightly below it.
+
+## Advanced: running the `startrails` binary directly
+
+```text
+Usage: startrails [-v] -d <dir> -e <ext> [-b <brightness>] [-o <output>] [-S] [-s <width>x<height>]
+
+Arguments:
+  -d <str>        directory from which to read images (required)
+  -e <str>        filter images to this extension (required)
+  -o <str>        output image filename
+  -b <float>      brightness threshold, 0.0 (black) to 1.0 (white)
+  -S              print image directory statistics without producing an image
+  -s <int>x<int>  restrict to images of this size
+  -v              increase log verbosity
+```
+
+Example:
+
+```bash
+cd ~/allsky/bin
+./startrails -d images/20250710 -e jpg -b 0.15 \
+  -o images/20250710/startrails/startrails.jpg
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Startrails image is created but stars show no trails">
+    This is the most common issue. It means all (or nearly all) images were brighter than the Brightness Threshold and were excluded. Run `allsky-config get_brightness_info` to check your actual nighttime brightness values, then adjust the **Brightness Threshold** setting in the WebUI accordingly.
+
+    To iterate quickly, copy a small sample of nighttime images to a test directory and run `generateForDay.sh --startrails test` repeatedly as you tune the threshold. When done, move the images back and remove the test directory.
+  </Accordion>
+
+  <Accordion title="Startrails image is not being created at all">
+    Verify that the **Generate** setting is enabled in the Startrails sub-section of the WebUI. If it is, run manually and check for errors:
+
+    ```bash
+    generateForDay.sh --startrails DATE
+    ```
+
+    Replace `DATE` with a valid date such as `20250710`.
+  </Accordion>
+
+  <Accordion title="Startrails is created but not uploaded">
+    Verify that the **Upload** setting is enabled in the Startrails sub-section. If it is, run with `--debug` to diagnose the upload:
+
+    ```bash
+    generateForDay.sh --upload --debug --startrails DATE
+    ```
+
+    If the upload continues to fail, run `testUpload.sh` to check the connection to your remote server or Allsky Website.
+  </Accordion>
+
+  <Accordion title="Resolution mismatch — some images are skipped">
+    All images must have the same resolution. If your daytime and nighttime **Binning** settings differ, or if you changed **Image Resize** or **Image Crop** during the night, only images with the same resolution as the first image will be used. Ensure consistent settings throughout the night.
+  </Accordion>
+</AccordionGroup>

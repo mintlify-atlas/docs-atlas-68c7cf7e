@@ -1,0 +1,84 @@
+---
+title: "Dark frame subtraction for cleaner images"
+description: "Remove hot pixels and sensor noise from Allsky images by capturing dark frames with a lens cap and applying automatic subtraction."
+---
+
+All cameras produce sensor noise — pixels that appear white or colored when they should be black. This noise is most visible in long nighttime exposures and includes **hot pixels** (pixels stuck permanently on), a salt-and-pepper random pattern, and **cold pixels** (pixels stuck permanently off). Noise increases with temperature and exposure length and is present even on modern, high-quality sensors.
+
+A **dark frame** is an image taken with the lens fully covered so no light enters — the sensor captures only its own noise. When you subtract a dark frame from a regular image (called a **light frame**), the noise cancels out, leaving a cleaner image.
+
+<Note>
+  Even the Hubble Space Telescope produces sensor noise, which is why it is cooled to extremely low temperatures. Most astrophotography cameras are also cooled — typically 10–30 degrees C below ambient temperature.
+</Note>
+
+## When to take dark frames
+
+You can take dark frames at any time of day. The software automatically uses nighttime settings (Max Auto-Exposure, Gain, Binning) regardless of when you capture them. The most important requirement is that **no light reaches the sensor** — the lens must be completely covered.
+
+<Warning>
+  The lens caps that come with many cameras allow a small amount of light through. Do not rely solely on a lens cap. Place a dark cloth or other opaque material over the lens in addition to the cap. For maximum accuracy, take dark frames at night or in a dark room.
+</Warning>
+
+Good times to capture dark frames:
+
+- Overcast nights when imaging is not possible
+- Before installing the camera in a location that is hard to access
+- Whenever you notice increased noise in your images
+
+Because sensor noise changes with temperature, try to capture dark frames across a range of temperatures. A 2–3 degree spread is usually sufficient (e.g., 21, 24, 27 °C). If possible, take a set of darks with the camera cold and another after it has warmed to operating temperature.
+
+<Note>
+  If you later change the **Gain** or **Binning** settings, you must discard the old dark frames and capture new ones. Noise is directly affected by these settings. Save the old darks somewhere else if you think you may revert to the original settings.
+</Note>
+
+## Capturing dark frames
+
+<Steps>
+  <Step title="Enable dark frame capture">
+    In the WebUI's **Allsky Settings** page, set **Take Dark Frames** to **Yes**, then click **Save changes**. Allsky will stop and wait for you to manually restart it.
+  </Step>
+  <Step title="Cover the lens">
+    Place an opaque cover over the camera lens and dome so that absolutely no light enters. Double-check there are no gaps.
+  </Step>
+  <Step title="Start Allsky">
+    ```bash
+    sudo systemctl start allsky
+    ```
+
+    Dark frames are saved to `~/allsky/darks/`. A new dark frame is captured every time the sensor temperature changes by 1 degree C, building up a temperature-indexed library. Each file is named after its temperature, e.g., `21.png`.
+  </Step>
+  <Step title="Stop dark frame capture">
+    When you have captured darks across the temperature range you need, set **Take Dark Frames** to **No** in the WebUI and click **Save changes**. Allsky will stop again.
+  </Step>
+  <Step title="Uncover the lens">
+    Remove the opaque cover from the lens and dome.
+  </Step>
+  <Step title="Restart Allsky">
+    ```bash
+    sudo systemctl start allsky
+    ```
+  </Step>
+</Steps>
+
+## Applying dark frame subtraction
+
+<Steps>
+  <Step title="Enable subtraction">
+    In the WebUI's **Allsky Settings** page, set **Use Dark Frames** to **Yes** and click **Save changes**. Allsky restarts and begins subtracting dark frames from all nighttime images.
+  </Step>
+</Steps>
+
+You will receive an error message in the WebUI if dark frame subtraction is enabled but no dark frames are found in `~/allsky/darks/`.
+
+## How the software selects a dark frame
+
+When subtracting dark frames, the software looks in `~/allsky/darks/` for the dark frame whose filename (temperature) is closest to the current sensor temperature. For example, if the current sensor temperature is 21 °C and the darks directory contains `17.png`, `20.png`, and `23.png`, the software selects `20.png` because it is only 1 degree away.
+
+The selection is based entirely on the **filename** — the software does not inspect the contents of the dark files. The closest match produces the best noise cancellation under normal conditions.
+
+## File locations
+
+| Path | Purpose |
+|---|---|
+| `~/allsky/darks/` | Stores dark frame files, named by temperature (e.g., `21.png`) |
+| `~/allsky/tmp/dark.png` | Temporary location while a dark is being captured, before it is moved |

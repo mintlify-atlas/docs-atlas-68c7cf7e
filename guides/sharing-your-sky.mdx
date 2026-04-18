@@ -1,0 +1,68 @@
+---
+title: "Add your camera to the global Allsky Map"
+description: "Register your Allsky camera on the global Allsky Map so that visitors can find your location, view your live sky image, and link to your website."
+---
+
+The [Allsky Map](https://www.thomasjacquin.com/allsky-map/) is a global map showing the location and basic information of all known Allsky cameras. Visitors can browse the map, click a pin to see details about a camera, and — if the camera owner has configured a public image URL — view that camera's most recent sky image directly on the map. Clicking the thumbnail takes the visitor to the owner's full Allsky Website.
+
+## What appears on the map
+
+Each camera on the map is represented by a pin at its geographic location. Clicking a pin shows:
+
+- Basic information about the camera and its owner
+- The latest sky image (if a public image URL has been configured)
+- A link to the owner's Allsky Website (if a website URL has been configured)
+
+The map displays live thumbnails for cameras that have provided an accessible image URL.
+
+## Requirements
+
+Your camera does **not** need to be publicly accessible to appear on the map — you can show a location pin without providing any URLs. However, to display your live image and link to your website, both must be reachable from the internet (not behind a firewall or NAT without port forwarding).
+
+## Add your camera to the map
+
+<Steps>
+  <Step title="Open Allsky Settings in the WebUI">
+    Navigate to the **Allsky Settings** page in the WebUI and scroll to the **Allsky Map Settings** section.
+  </Step>
+  <Step title="Enable Show On Map">
+    Enable the **Show On Map** setting. This immediately registers your camera with the map server — no human review or approval is required.
+  </Step>
+  <Step title="Configure your map information">
+    Fill in the map-related settings in the **Allsky Map Settings** section. Key settings include:
+
+    - **Latitude / Longitude** — your camera's geographic coordinates
+    - **Website URL** — the URL of your public Allsky Website (leave blank if not publicly accessible)
+    - **Image URL** — the direct URL to your current sky image (leave blank if not publicly accessible)
+  </Step>
+  <Step title="Save your changes">
+    Click **Save changes**. Your map information is sent to the map server immediately. It is also automatically re-sent every other day so the map server can distinguish active cameras from stale, expired entries.
+  </Step>
+</Steps>
+
+<Note>
+  If your camera is not accessible from the internet, leave the **Website URL** and **Image URL** fields blank. Your camera's location pin will still appear on the map — visitors will just not be able to see a live image or follow a link to your website.
+</Note>
+
+## Making your image publicly accessible
+
+To display a live thumbnail on the map, your current sky image must be reachable via a public URL. The Allsky Pi serves a public-facing page at:
+
+```
+http://<your-pi-ip>/public.php
+```
+
+For this URL to be accessible from the internet, you need to:
+
+1. **Forward port 80** (and port 443 if you use HTTPS) on your router to the Pi's local IP address.
+2. Optionally set up a domain name pointing to your public IP address.
+3. Enter the resulting public URL in the **Image URL** field in the WebUI's Allsky Map Settings.
+
+<Warning>
+  Exposing your Pi directly to the internet carries security risks. Ensure you have reviewed the Pi's security configuration before enabling port forwarding. Consider enabling SSL (HTTPS) to encrypt traffic to and from your Pi.
+</Warning>
+
+## Removing or updating your camera
+
+- **Remove from map**: disable the **Show On Map** setting in the WebUI. The change takes effect immediately.
+- **Update information**: change any map-related setting in the WebUI and save. The map server is updated automatically.

@@ -1,0 +1,120 @@
+---
+title: "Exposure, gain, and image stretch settings"
+description: "Understand how to configure exposure, gain, and stretch settings in Allsky for optimal image quality across day and night conditions."
+---
+
+Several settings work together to determine what a captured image looks like — how bright it is, how colorful it is, and its color balance. Allsky lets you set these values manually or have them adjusted automatically by the software. The settings apply separately to daytime and nighttime captures, so you can tune each independently.
+
+## Image brightness: exposure and gain
+
+If you have used a film or DSLR camera, you are already familiar with shutter speed and ISO. In Allsky, shutter speed is called **Exposure** and ISO is called **Gain**. They work together to determine the final image brightness:
+
+- Halving the exposure and doubling the gain produces an image of the same brightness, but slightly noisier — increasing gain or ISO always increases salt-and-pepper noise.
+- For daytime captures, the sky is already bright so the default daytime gain is the camera's minimum. For nighttime captures, the default manual exposure is 10,000 ms (10 seconds) and the gain is set to half the camera's maximum.
+
+### Auto vs manual exposure
+
+<AccordionGroup>
+  <Accordion title="Auto-Exposure">
+    When **Auto-Exposure** is enabled, Allsky automatically adjusts the exposure length to keep images properly exposed as sky brightness changes due to clouds, twilight, or other factors.
+
+    - The **Manual Exposure** value is used as a **starting point** when auto-exposure begins. Allsky then adjusts over several frames until it converges on the correct exposure.
+    - The **Max Auto-Exposure** setting caps how long any single exposure can be.
+    - When both **Auto-Exposure** and **Consistent Delays Between Images** are on, the time between the start of consecutive frames is always `Max Auto-Exposure + Delay`, regardless of how long each individual exposure actually was. This produces evenly spaced timelapse frames.
+
+    <Note>
+      Start with the default Manual Exposure value as your starting point for auto-exposure. The algorithm typically converges to the right exposure within a few frames. If images are consistently too bright or too dark at startup, adjust the starting Manual Exposure value.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Manual Exposure">
+    When **Auto-Exposure** is off, the **Manual Exposure** value is used for every frame. The time between the start of one frame and the next is always `Manual Exposure + Delay`, making the rhythm consistent regardless of the **Consistent Delays** setting.
+
+    | Period | Default manual exposure |
+    |---|---|
+    | Daytime | 0.5 ms |
+    | Nighttime | 10,000 ms (10 seconds) |
+  </Accordion>
+</AccordionGroup>
+
+### Auto vs manual gain
+
+| Setting | Default (Day) | Default (Night) |
+|---|---|---|
+| Auto-Gain | No | No |
+| Gain | Camera minimum | Half of camera maximum |
+| Max Auto-Gain | Camera dependent | Camera dependent |
+
+- When **Auto-Gain** is off, increasing Gain produces brighter images at the cost of more noise.
+- When **Auto-Gain** is on, the **Gain** value is used as a starting point, and Allsky adjusts it automatically.
+- With ZWO cameras, enabling both **Auto-Exposure** and **Auto-Gain** together can produce unpredictable results and requires testing.
+
+### Mean Target
+
+The **Mean Target** setting (range 0.0–1.0) controls the target average brightness of images when auto-exposure is active. Increasing it brightens images; decreasing it darkens them. The **Mean Threshold** setting (default 0.1) defines how close ±the actual brightness needs to be to the target before no further adjustment is made.
+
+For example, with a **Mean Target** of `0.4` and a **Mean Threshold** of `0.1`, Allsky accepts any image with mean brightness between `0.3` and `0.5` without further adjustment.
+
+Best results are achieved when both **Auto-Exposure** and **Auto-Gain** are enabled.
+
+### ZWO-specific settings
+
+| Setting | Default | Description |
+|---|---|---|
+| Aggression | 75% | How much of a calculated exposure change to apply per frame. Lower values smooth brightness changes but react more slowly. |
+| Gain Transition Time | 15 min | Minutes over which to ramp gain when transitioning between day and night. Set to `0` to disable. Only works when nighttime Auto-Gain is off. |
+| ZWO Exposure Type | Snapshot | `Snapshot` takes pictures one at a time. `Video Off` mimics a video camera turned off after each picture and decreases sensor temperature 5–15 °C. `Video (original)` is always-on video mode. Note: Auto-Gain and Auto White Balance do not work in Snapshot mode. |
+
+## Color balance and white balance
+
+If your sky looks green instead of blue, the color balance is off. On color cameras, you can:
+
+- Enable **Auto White Balance** to let the camera set white balance automatically. Red/Blue balance values are used as starting points.
+- Set **Red Balance** and **Blue Balance** manually. There is no separate green balance — green can be adjusted by changing the red and blue values.
+
+<Warning>
+  Be cautious about disabling **Auto White Balance** at night. Some cameras implement auto white balance by taking several pictures in succession. With 60-second exposures, this could mean a 3-minute wait for a single image. If in doubt, enable Auto White Balance at night and observe the results before turning it off.
+</Warning>
+
+You can configure Auto White Balance, Red Balance, and Blue Balance independently for daytime and nighttime.
+
+## Saturation (RPi cameras only)
+
+Saturation controls how vivid colors are, from black-and-white (lowest value) to very vivid (highest value, often looking unnatural). The middle of the range is "normal" saturation. To produce a fully black-and-white image, set **Saturation** to its minimum value.
+
+## Image stretch
+
+Stretching an image increases its contrast — the difference between light and dark areas — without saturating bright parts or turning dark parts completely black. It is most commonly used at night to lighten an image and bring out faint stars, reducing the need for high gain (and therefore noise).
+
+There are two stretch parameters, each configurable separately for daytime and nighttime:
+
+| Setting | Default | Description |
+|---|---|---|
+| Stretch Amount | 0 (disabled) | How much to stretch. `3` is typical, `20` is a lot. Higher values lighten the image more. Set to `0` to disable. |
+| Stretch Mid Point | 10 | Which brightness level to lighten: `0` lightens near-black pixels, `50` lightens middle-gray pixels, `100` lightens near-white pixels. |
+
+### Stretch examples
+
+The following examples show the effect of increasing stretch on a 60-second night exposure at gain 250 (near maximum for the camera):
+
+| Stretch Amount | Stretch Mid Point | Result |
+|---|---|---|
+| 0 | — | No stretching. Dark stars are hard to see at high gain. |
+| 10 | 10 | Dark parts of the image become much brighter. Bright stars only slightly brighter, but faint stars much easier to see. |
+| 10 | 30 | Slight overall brightness increase, noticeable increase in star brightness. |
+| 20 | 10 | Even brighter than Amount 10. |
+
+<Tip>
+  You may be able to decrease the **Gain** (and therefore noise) by increasing the **Stretch Amount**. Experiment with the combination to get the results you want.
+</Tip>
+
+## Remove Bad Images
+
+After each capture, Allsky checks the image's mean brightness and discards it if it falls outside the configured thresholds. This prevents near-black (camera covered, lens fogged) or near-white (sensor glare, sunrise overexposure) frames from entering keograms, startrails, and timelapses.
+
+| Setting | Default | Description |
+|---|---|---|
+| Remove Bad Images Threshold Low | 0.1 | Images with mean brightness **below** this value are deleted. Useful range: `0.01`–`0.2`. Set to `0` to disable. |
+| Remove Bad Images Threshold High | 0.9 | Images with mean brightness **above** this value are deleted. Useful range: `0.8`–`0.95`. Set to `0` to disable. |
+
+Both thresholds are independent. You can disable just one by setting it to `0` while leaving the other active.

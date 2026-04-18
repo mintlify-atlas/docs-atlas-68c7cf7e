@@ -1,0 +1,95 @@
+{
+  "projectType": "general",
+  "projectName": "Allsky Camera",
+  "projectDescription": "An open-source all-sky camera system for Raspberry Pi that captures, processes, and publishes night-sky images with features like keograms, startrails, timelapse videos, and customizable image overlays.",
+  "theme": "palm",
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "getting-started/requirements",
+              "getting-started/installation",
+              "getting-started/how-allsky-works"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/allsky-settings",
+              "configuration/website-settings",
+              "configuration/remote-server",
+              "configuration/exposure-gain-saturation"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/overlays",
+              "features/modules",
+              "features/keograms",
+              "features/startrails",
+              "features/timelapse",
+              "features/dark-frames",
+              "features/webui"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/allsky-website",
+              "guides/image-storage",
+              "guides/dark-frames",
+              "guides/sharing-your-sky",
+              "guides/ssl",
+              "guides/file-transfer"
+            ]
+          },
+          {
+            "group": "Troubleshooting & Reference",
+            "pages": [
+              "reference/troubleshooting",
+              "reference/faq",
+              "reference/known-issues",
+              "reference/picking-hardware",
+              "reference/changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Automated night-sky image capture using ZWO and Raspberry Pi cameras",
+    "Web User Interface (WebUI) for administration, live image viewing, and configuration",
+    "Modular post-processing pipeline: overlays, star counting, meteor detection, weather data",
+    "Keogram generation — a timeline image stitched from nightly captures",
+    "Startrails — stacked composite images showing star movement across the night",
+    "Automatic timelapse video creation at end of each night",
+    "Remote website publishing via FTP/SCP for sharing images publicly",
+    "Dark frame subtraction to remove hot pixels from images",
+    "Drag-and-drop Overlay Editor for text, images, and data fields",
+    "Allsky Map integration to share camera location globally"
+  ],
+  "publicApiSurface": [
+    "allsky.sh — main entry point to start the allsky capture service",
+    "install.sh — full installation script for Raspberry Pi",
+    "upgrade.sh — in-place upgrade from a prior version",
+    "scripts/endOfNight.sh — post-capture pipeline (keogram, startrails, timelapse)",
+    "scripts/saveImage.sh — saves and processes each captured image",
+    "scripts/modules/allsky_overlay.py — overlay module for annotating images",
+    "scripts/modules/allsky_starcount.py — module to count stars in an image",
+    "scripts/modules/allsky_meteor.py — module for meteor detection",
+    "scripts/modules/allsky_export.py — module to export images externally",
+    "scripts/timelapse.sh — generate timelapse video from image set",
+    "scripts/upload.sh — upload images/videos to remote servers",
+    "html/public.php — publicly accessible current-image page"
+  ]
+}

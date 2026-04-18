@@ -1,0 +1,135 @@
+---
+title: "Post-capture modules: extend image processing"
+description: "Allsky modules run after each image capture to enhance images, collect data, and trigger actions — fully configurable via the Module Manager."
+---
+
+**Modules** are post-capture processing steps that run automatically after Allsky saves each image. Different modules perform different tasks — adding overlays, counting stars, detecting meteors, exporting data, and more. The **Module Manager** in the WebUI controls which modules run, in which flows, and in what order.
+
+## Two types of modules
+
+There are two categories of modules:
+
+1. **Allsky Modules** — developed and maintained by the Allsky team and installed alongside Allsky itself.
+2. **User Modules** — developed and maintained by the community, installable from the official [allsky-modules](https://github.com/AllskyTeam/allsky-modules) repository.
+
+<Warning>
+  Only install User Modules from the official [allsky-modules](https://github.com/AllskyTeam/allsky-modules) repository. Installing modules from other sources can be dangerous. Some modules are marked **experimental** — before using these you should be comfortable analysing Linux log files, as experimental modules can be unstable and may disrupt Allsky operation. Some modules also require external hardware connected to the Pi's GPIO pins.
+</Warning>
+
+## Module flows
+
+Modules run within **flows** that determine when they execute. Each flow maintains its own ordered list of modules.
+
+| Flow | When it runs |
+|---|---|
+| **Daytime Capture** | After every daytime image is captured and initially saved |
+| **Nighttime Capture** | After every nighttime image is captured and saved |
+| **Day to Night Transition** | When Allsky switches from daytime to nighttime capturing |
+| **Night to Day Transition** | When Allsky switches from nighttime to daytime capturing |
+| **Periodic jobs** | On a configurable timer, independent of image capture |
+
+The current day/night flow is automatically pre-selected in the Module Manager depending on the time of day.
+
+## The Module Manager
+
+The Module Manager is accessible from the WebUI. It provides drag-and-drop control over which modules are active and in what order they run.
+
+<Steps>
+  <Step title="Select a flow">
+    Choose the flow you want to configure from the dropdown. If you have unsaved changes in the current flow, you will be prompted to save before switching.
+  </Step>
+  <Step title="Enable a module">
+    Drag a module from the **Available Modules** column to the **Selected Modules** column, then check the **Enabled** checkbox. The module becomes active after saving the flow.
+  </Step>
+  <Step title="Configure a module">
+    Click the **Settings** button on any module in the **Selected Modules** column to view and adjust its configuration options.
+  </Step>
+  <Step title="Set execution order">
+    Drag modules up or down within the **Selected Modules** column to change the order they run. Modules highlighted in red cannot be moved (they are pinned to their position in the pipeline).
+  </Step>
+  <Step title="Save the flow">
+    Click **Save** to persist your changes. The Save button is enabled whenever unsaved changes exist.
+  </Step>
+</Steps>
+
+To temporarily disable a module without losing its settings, uncheck the **Enabled** checkbox rather than dragging it back to the **Available Modules** column.
+
+## Data passing between modules
+
+Modules can share data with each other within the same flow. For example, the **Star Count** module writes its result to a variable that the **Overlay** module can then read and display on the image. Run the Star Count module earlier in the flow than the Overlay module to ensure the count is available when the overlay is rendered.
+
+## Built-in Allsky modules
+
+<AccordionGroup>
+  <Accordion title="allsky_loadimage — Load Image">
+    Loads the last image captured by Allsky. This is always the first module run in the Daytime Capture and Nighttime Capture flows. It cannot be moved or removed. Enabled by default — no installation required.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture
+  </Accordion>
+
+  <Accordion title="allsky_saveimage — Save Image">
+    Saves the final processed image after all other modules have completed. This is always the last module run in each capture flow and cannot be moved or removed. Enabled by default — no installation required.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture
+  </Accordion>
+
+  <Accordion title="allsky_overlay — Overlays">
+    Overlays data fields on the captured image. Reads a configuration produced by the Overlay Editor and composites text fields, image fields, and variable values onto the image. Runs in both day and night flows.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture
+  </Accordion>
+
+  <Accordion title="allsky_maskimage — Mask Image">
+    Applies a mask to the image. Useful for removing lens artefacts outside the usable image area. The mask must be a PNG with pure white in areas to keep and black in areas to make black.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture
+  </Accordion>
+
+  <Accordion title="allsky_starcount — Star Count (experimental)">
+    Attempts to count the number of stars in a nighttime image using configurable detection and distance thresholds. Results are stored as a variable accessible to other modules such as the Overlay module. Supports an optional image mask to improve detection accuracy.
+
+    **Available in flows:** Nighttime Capture
+
+    **Experimental:** Yes — requires log analysis skills before use.
+  </Accordion>
+
+  <Accordion title="allsky_meteor — Meteor Detection (experimental)">
+    Attempts to locate meteors in captured images by detecting linear trails above a configurable minimum pixel length. Can optionally annotate detected meteors on the image and integrates with the Clear Sky module to skip detection when the sky is cloudy.
+
+    **Available in flows:** Nighttime Capture
+
+    **Experimental:** Yes — requires log analysis skills before use.
+  </Accordion>
+
+  <Accordion title="allsky_clearsky — Clear Sky Alarm (experimental)">
+    Determines whether the sky is clear by counting stars in a configurable Region of Interest (ROI). If the star count exceeds a threshold, the sky is assumed to be clear. The result can optionally be sent to an MQTT broker. Other modules such as Star Count and Meteor Detection can be configured to only run when this module reports a clear sky.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture
+
+    **Experimental:** Yes
+  </Accordion>
+
+  <Accordion title="allsky_export — Export">
+    Exports Allsky variables to a JSON file (default path: `${ALLSKY_TMP}/allskydata.json`). Useful for integrating Allsky data with external tools or dashboards. The list of exported variables is configurable.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture
+  </Accordion>
+
+  <Accordion title="allsky_pistatus — Pi Status">
+    Reads Raspberry Pi system data including CPU temperature, throttling state, memory usage, and disk space. Runs on a configurable periodic interval (minimum 60 seconds). The collected data is stored as variables that can be used by the Overlay module.
+
+    **Available in flows:** Periodic jobs
+  </Accordion>
+
+  <Accordion title="allsky_script — Script">
+    Runs a custom shell script. Accepts a path to any executable script and invokes it at the appropriate point in the flow. Useful for triggering external actions — sending notifications, updating a dashboard, controlling hardware — without modifying Allsky's own code.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture, Day to Night, Night to Day, End of Night, Periodic jobs
+  </Accordion>
+
+  <Accordion title="allsky_saveintermediateimage — Save Intermediate Image">
+    Saves the current state of the image at any point mid-pipeline. Useful for debugging a module sequence or preserving a partially-processed image for comparison.
+
+    **Available in flows:** Daytime Capture, Nighttime Capture
+  </Accordion>
+</AccordionGroup>

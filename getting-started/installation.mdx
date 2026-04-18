@@ -1,0 +1,147 @@
+---
+title: "How to install Allsky on your Raspberry Pi"
+description: "Step-by-step guide to installing Allsky Camera software on a Raspberry Pi, from flashing the OS image to first image in the WebUI."
+---
+
+Installing Allsky involves flashing a supported OS image onto your Pi, cloning the repository, and running the interactive installer. The process typically takes up to an hour on first install, depending on your Pi model and how many packages are already present. Subsequent installs are significantly faster.
+
+<Steps>
+  <Step title="Flash Raspberry Pi OS">
+    Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to write the **Bookworm 64-bit Desktop** image to your SD card. The Desktop variant is recommended. Bullseye also works, but Buster support will be dropped in the next major release.
+
+    While flashing, use the Imager's advanced settings to pre-configure:
+    - Hostname (e.g., `allsky`)
+    - SSH access
+    - Wi-Fi credentials (or plan to use a wired LAN connection, which is faster and more reliable)
+  </Step>
+
+  <Step title="Connect your camera">
+    Connect your camera to the Pi **before** powering it on. If you have an RPi camera module, verify it is visible after booting:
+
+    ```bash
+    libcamera-still --list-cameras
+    ```
+
+    Camera number `0` must appear in the list before proceeding. Some non-Raspberry Pi brand cameras may need special drivers or OS configuration — consult the camera manual.
+  </Step>
+
+  <Step title="Ensure git is installed">
+    Connect your Pi to the internet. A wired LAN connection is preferred. Then make sure `git` is available:
+
+    ```bash
+    sudo apt-get install git
+    ```
+  </Step>
+
+  <Step title="Clone the Allsky repository">
+    From your home directory, clone the repository:
+
+    ```bash
+    cd ~
+    git clone --depth=1 --recursive https://github.com/AllskyTeam/allsky.git
+    ```
+
+    This downloads about 150 MB into a new `~/allsky` directory. The `--recursive` flag also fetches the `sunwait` submodule used for day/night detection.
+  </Step>
+
+  <Step title="Run the installer">
+    Change into the newly cloned directory and run the installation script:
+
+    ```bash
+    cd ~/allsky
+    ./install.sh
+    ```
+
+    The installer is interactive and will prompt you for several items. **Accepting the defaults is recommended** for most prompts:
+
+    - **Hostname** — if never changed, you are asked to set one. The default is `allsky`. If you have multiple Pis on the same network they must each have a unique hostname.
+    - **Locale** — determines the decimal separator in log output. The default is `en_GB.UTF-8`.
+    - **Swap space** — the installer may offer to add swap space to increase available memory. Insufficient swap is a leading cause of timelapse generation failures.
+    - **Temporary directory in RAM** — placing `~/allsky/tmp` in memory significantly reduces SD card writes, extending its lifespan.
+    - **Latitude and Longitude** — required for day/night calculations. Default values based on your network location are shown.
+    - **Reboot** — if a reboot is needed, you are asked whether to reboot immediately. If you answer "no", Allsky will not start until you reboot manually.
+
+    The installer sets up the Allsky systemd service, installs all dependencies, configures the lighttpd web server for the WebUI, and creates the initial settings file.
+  </Step>
+
+  <Step title="Reboot and complete post-install actions">
+    After installation, reboot if prompted. Then open a browser and navigate to the WebUI:
+
+    ```
+    http://allsky.local
+    ```
+
+    or
+
+    ```
+    http://allsky.localhost
+    ```
+
+    The default login is username **admin** and password **secret**.
+
+    <Note>
+      If your Pi is accessible from the internet, change the default password immediately using the **Change Password** link in the WebUI.
+    </Note>
+
+    In the WebUI, go to the **Allsky Settings** page. If a message indicates that Allsky needs to be configured or settings need review, do that now. Click the blue button (labelled **Save changes** or **Configuration done; start Allsky**) to start capturing.
+
+    The WebUI will display a reminder for any post-install actions that still need to be completed. Clear those messages once you have addressed them.
+  </Step>
+</Steps>
+
+## Starting and stopping Allsky
+
+Allsky starts automatically when the Pi boots. You can control it manually with `systemctl`:
+
+```bash
+sudo systemctl start allsky
+sudo systemctl stop allsky
+sudo systemctl restart allsky
+sudo systemctl status allsky
+```
+
+To disable automatic startup on boot:
+
+```bash
+sudo systemctl disable allsky
+```
+
+To re-enable it:
+
+```bash
+sudo systemctl enable allsky
+```
+
+## Accessing the public view
+
+A public page is available to share your current sky image without requiring login:
+
+```
+http://your_raspberry_pi_ip/public.php
+```
+
+If the Pi is behind a firewall, consult your router's documentation to allow inbound connections on port 80.
+
+## Upgrading an existing installation
+
+To upgrade while keeping your existing settings, first stop Allsky and rename the current directory:
+
+```bash
+sudo systemctl stop allsky
+cd ~
+mv allsky allsky-OLD
+```
+
+Then clone the new version and run the installer:
+
+```bash
+git clone --depth=1 --recursive https://github.com/AllskyTeam/allsky.git
+cd ~/allsky
+./install.sh
+```
+
+During installation you will be asked whether to use settings from `allsky-OLD`. Choosing yes preserves all your configuration. Nothing is lost with this option.
+
+<Note>
+  Alternatively, you can run `sudo bash upgrade.sh` from inside the existing `~/allsky` directory if an upgrade script is provided with the release. Check the Version Change Log in the WebUI documentation for upgrade-specific instructions.
+</Note>

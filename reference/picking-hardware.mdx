@@ -1,0 +1,124 @@
+---
+title: "Choose the right Pi, camera, and lens"
+description: "Compare Raspberry Pi models, ZWO and RPi camera sensors, fisheye lenses, and enclosure options to build the best allsky camera for your budget."
+---
+
+Choosing hardware for an allsky camera involves balancing budget against capability. The sections below cover the Raspberry Pi model, camera sensor, and lens in turn — each choice affects what Allsky can do for you in practice.
+
+## Raspberry Pi
+
+Processing power matters for post-capture work — keograms, star trails, and timelapse videos are CPU- and memory-intensive. Taking pictures is lightweight, so almost any Pi can capture images; the difference shows up at end-of-night processing.
+
+<CardGroup cols={2}>
+
+<Card title="Pi 5 (8 GB) — Best choice" icon="star" href="https://www.raspberrypi.com/products/raspberry-pi-5/">
+The fastest option available. Handles everything Allsky currently does and has headroom for future releases. Noticeably quicker for keograms, star trails, and timelapse creation. Supports NVMe SSDs via an NVMe HAT, which is far more reliable and spacious than an SD card.
+</Card>
+
+<Card title="Pi 4 (4 GB) — Recommended" icon="thumbs-up" href="https://www.raspberrypi.com/products/raspberry-pi-4-model-b/">
+The next best option. A Pi 4 with 4 GB handles all Allsky features comfortably. A Pi 4 with 2 GB is acceptable if the 4 GB model is out of budget. The 1 GB Pi 4 requires additional swap space, which slows things down and increases SD card wear.
+</Card>
+
+<Card title="Pi 3B+ (2 GB) — Acceptable" icon="check" href="https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/">
+Works with Allsky but timelapse creation takes longer and mini-timelapse frequency is limited. Suitable if cost is the primary concern and you can tolerate slower processing.
+</Card>
+
+<Card title="Pi Zero 2 — Limited" icon="triangle-exclamation" href="https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/">
+Only consider this if cost is the single deciding factor. Has limited memory and may not be able to generate timelapse videos reliably. Future Allsky versions may not support it. The original Pi Zero (not Zero 2) should not be used at all.
+</Card>
+
+</CardGroup>
+
+<Note>
+Faster Pi models produce more heat. If your allsky enclosure is not ventilated you may encounter thermal throttling, which can cause image corruption and slow processing. Adding a small fan to pull in outside air helps both the Pi and the camera sensor.
+</Note>
+
+### SD cards
+
+Get at least a **128 GB SD card**. A 256 GB card is worth the modest extra cost — it stores more images and videos before you have to manage disk space. Card speed makes little difference for Allsky's typical workload, but reliability matters: use a reputable brand.
+
+---
+
+## Cameras
+
+Budget is usually the deciding factor, but a few important distinctions apply.
+
+### RPi HQ camera (Sony IMX477)
+
+The **RPi HQ camera** is hard to beat for a Pi-only build. It produces excellent images, is relatively inexpensive, and integrates natively with the Pi. Resolution is 4056 × 3040 pixels with a 7.86 mm sensor diagonal. It only works with a Raspberry Pi (not ZWO-compatible hardware), and its high resolution means timelapse generation requires more RAM — see [Troubleshooting timelapse](/reference/troubleshooting#timelapse-video-not-generated) if you run into memory errors.
+
+### ZWO ASI cameras
+
+ZWO cameras are popular because many astronomy enthusiasts already own one, and they work across a wider range of hardware. Common choices include:
+
+| Camera | Sensor | Resolution | Notes |
+|---|---|---|---|
+| ZWO ASI178 | Sony IMX178 | 3096 × 2080 | Popular for its sensitivity |
+| ZWO ASI224 | Sony IMX224 | 1403 × 976 | Lower resolution, compact |
+| ZWO ASI290 | Sony IMX290 | 1936 × 1096 | Good low-light performance |
+
+<Warning>
+**Do not buy a ZWO ASI120 camera** (or the T7C, which is an OEM version of the ASI120MC-mini). It produces high noise, many hot pixels, and frequent errors. Many users have had to replace theirs.
+</Warning>
+
+### Colour vs. mono
+
+Mono cameras are more sensitive — they need shorter exposures or less gain to achieve the same brightness, which means less noise. Colour cameras produce a more "natural" look, especially during daylight. This is a personal preference; both work well with Allsky.
+
+### Auto-focus cameras (RPi Module 3)
+
+The RPi Module 3 (Sony IMX708) and similar cameras support motorised auto focus. This sounds convenient but comes with trade-offs:
+
+- Auto focus adds several seconds to each daytime image and several minutes to nighttime images while it hunts for focus.
+- The lenses supplied with these cameras typically produce a field of view of at most 120°, whereas typical fisheye allsky lenses cover 160°–185°.
+- The recommended practice is to find the best focus position manually at installation time and then **disable** auto focus permanently using `--lens-position X` in **Extra Parameters**.
+
+---
+
+## Lenses
+
+The lens determines your field of view (FOV) and how much light the sensor receives.
+
+**Focal length** controls FOV — lower focal lengths produce wider views. For full-sky allsky imaging, most people use lenses in the **1.5 mm – 2.5 mm** range, which gives roughly **160° – 185°** field of view. These wide-angle lenses are called **fisheye** lenses. If trees or buildings block the horizon and you want to exclude them, a longer focal length (narrower FOV) may be preferable.
+
+**Aperture** (written as `f/1.4`, `f/2.0`, etc.) controls light throughput — lower numbers let more light in and are better for nighttime sensitivity, but may produce slightly softer images. Typical allsky lenses range from **f/1.4 to f/2.8**.
+
+**Image circle** is the diameter of the circular image projected onto the sensor by the lens. Comparing the image circle to the sensor's physical dimensions determines what the final image looks like:
+
+- Image circle **≤ sensor height**: full circular sky image visible, black corners on the sides.
+- Image circle **between sensor height and diagonal**: top and bottom of the sky image are clipped.
+- Image circle **≥ sensor diagonal**: image fills the entire sensor with no black border.
+
+### Example camera and lens combinations
+
+**Common allsky cameras:**
+
+| Camera | Sensor | Width | Height | Diagonal | Resolution |
+|---|---|---|---|---|---|
+| RPi HQ | Sony IMX477 | 6.3 mm | 4.7 mm | 7.86 mm | 4056 × 3040 |
+| ZWO ASI178 | Sony IMX178 | 7.4 mm | 5.0 mm | 8.93 mm | 3096 × 2080 |
+| ZWO ASI224 | Sony IMX224 | 4.9 mm | 3.7 mm | 6.14 mm | 1403 × 976 |
+| ZWO ASI290 | Sony IMX290 | 5.6 mm | 3.2 mm | 6.45 mm | 1936 × 1096 |
+
+**Example allsky lenses:**
+
+| Lens | Focal length | Image circle | Aperture | FOV |
+|---|---|---|---|---|
+| cnAICO ACF12F0155IRMM | 1.5 mm | 4.6 mm | f/2.0 | 185° |
+| cnAICO ACTCS25IR8MPF | 2.5 mm | 6.4 mm | f/1.6 | 190° |
+| cnAICO ACCF021163MP | 2.1 mm | unknown | f/1.6 | 160° |
+| cnAICO ACF12FM014IRCMM | 1.4 mm | 4.59 mm | f/1.4 | 182° |
+
+To calculate your sensor's diagonal, use: `sqrt((width² + height²))`. For the RPi HQ: `sqrt((6.3² + 4.7²)) = 7.86 mm`.
+
+<Tip>
+The sky image is often slightly off-centre relative to the sensor because inexpensive allsky lenses are not perfectly aligned. This is normal and can be corrected by cropping the image in the WebUI's overlay settings.
+</Tip>
+
+---
+
+## Enclosure and power
+
+**Enclosure:** An outdoor allsky camera requires a weatherproof housing. A transparent dome on top protects the lens while allowing a wide FOV. Adding a small fan inside the enclosure pulls in cooler outside air, reducing sensor noise and extending the life of both the camera and the Pi.
+
+**Power supply:** Use a high-quality, rated power supply — the official Raspberry Pi supply is the most reliable choice. Undervoltage causes the Pi to throttle and can corrupt images or SD card data. Allsky reports throttle status on the WebUI **System** page.
